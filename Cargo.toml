@@ -1,0 +1,3 @@
+[workspace]
+members = ["explicit-error", "explicit-error-derive"]
+resolver = "2"
