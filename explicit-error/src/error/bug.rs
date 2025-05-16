@@ -1,10 +1,10 @@
-use super::HttpError;
+use super::Error;
 use serde::{Serialize, Serializer};
 use std::{backtrace::Backtrace, error::Error as StdError};
 
 /// Wrapper that capture a [backtrace](std::backtrace) for errors that ends up as an http 500 internal server error.
 ///
-/// [HttpError] implements `From<Bug>`, use `?` and `.into()` in functions and closures to convert to the [HttpError::Bug] variant.
+/// [Error] implements `From<Bug>`, use `?` and `.into()` in functions and closures to convert to the [Error::Bug] variant.
 ///
 /// To set up the log and http response body of a [Bug] implement [public_bug_response](crate::HandlerError::public_bug_response) of the [HandlerError](crate::HandlerError) trait.
 /// # Examples
@@ -32,21 +32,20 @@ use std::{backtrace::Backtrace, error::Error as StdError};
 /// When pattern matching on an error you can generate a [Bug] and attach the source to it.
 /// Note: The display implementation print the source's errors chain.
 /// ```rust
-/// # use explicit_error::{prelude::*, HttpError, HttpErrorData, Bug};
+/// # use explicit_error::{prelude::*, Error, HttpErrorData, Bug};
 /// # use problem_details::ProblemDetails;
 /// # use actix_web::http::StatusCode;
-/// # use sqlx::Error;
 /// use explicit_error::Result;
 ///
 /// fn fetch() -> Result<()> {
-///     let sqlx_error = Error::RowNotFound;
+///     let sqlx_error = sqlx::Error::RowNotFound;
 ///     Err(match sqlx_error {
-///         Error::RowNotFound => HttpError::from(MyEntitysError::NotFound),
+///         sqlx::Error::RowNotFound => Error::from(MyEntitysError::NotFound),
 ///         _ => Bug::new().with_source(sqlx_error).into()
 ///     })
 /// }
 ///
-/// # #[derive(Error, Debug)]
+/// # #[derive(HttpError, Debug)]
 /// # #[explicit_error(StdError)]
 /// # enum MyEntitysError {
 /// #    NotFound,
@@ -73,9 +72,9 @@ use std::{backtrace::Backtrace, error::Error as StdError};
 /// The prelude must be imported first with `use explicit_error::prelude::*`.
 /// ```rust
 /// # use std::fs::File;
-/// use explicit_error::{HttpError, prelude::*};
+/// use explicit_error::{Error, prelude::*};
 ///
-/// fn foo() -> Result<(), HttpError> {
+/// fn foo() -> Result<(), Error> {
 ///     let option: Option<u8> = None;
 ///     option.bug()?;
 ///
@@ -93,9 +92,9 @@ pub struct Bug {
     context: Option<String>,
 }
 
-impl From<Bug> for HttpError {
+impl From<Bug> for Error {
     fn from(value: Bug) -> Self {
-        HttpError::Bug(value)
+        Error::Bug(value)
     }
 }
 
@@ -153,21 +152,20 @@ impl Bug {
     /// On a [Result](std::result::Result) use [map_err_or_bug](crate::ResultBug::map_err_or_bug) to be more concise.
     /// # Examples
     /// ```rust
-    /// # use explicit_error::{prelude::*, HttpError, HttpErrorData, Bug};
+    /// # use explicit_error::{prelude::*, Error, HttpErrorData, Bug};
     /// # use problem_details::ProblemDetails;
     /// # use actix_web::http::StatusCode;
-    /// # use sqlx::Error;
     /// use explicit_error::Result;
     ///
     /// fn fetch() -> Result<()> {
-    ///     let sqlx_error = Error::RowNotFound;
+    ///     let sqlx_error = sqlx::Error::RowNotFound;
     ///     Err(match sqlx_error {
-    ///         Error::RowNotFound => MyEntitysError::NotFound.into(),
+    ///         sqlx::Error::RowNotFound => MyEntitysError::NotFound.into(),
     ///         _ => Bug::new().with_source(sqlx_error).into()
     ///     })
     /// }
     ///
-    /// # #[derive(Error, Debug)]
+    /// # #[derive(HttpError, Debug)]
     /// # #[explicit_error(StdError)]
     /// # enum MyEntitysError {
     /// #    NotFound,

@@ -19,9 +19,9 @@ pub fn derive(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> 
         }
 
         #[automatically_derived]
-        impl #impl_generics From<#ident> for explicit_error::HttpError #ty_generics #where_clause {
+        impl #impl_generics From<#ident> for explicit_error::Error #ty_generics #where_clause {
             fn from(value: #ident) -> Self {
-                explicit_error::HttpError::Domain(Box::new(<#ident as explicit_error::ToDomainError>::to_domain_error(value)))
+                explicit_error::Error::Domain(Box::new(<#ident as explicit_error::ToDomainError>::to_domain_error(value)))
             }
         }
 

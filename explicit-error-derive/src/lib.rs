@@ -11,7 +11,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{DeriveInput, parse_macro_input};
 
-#[proc_macro_derive(Error, attributes(explicit_error))]
+#[proc_macro_derive(HttpError, attributes(explicit_error))]
 pub fn derive_explicit_error(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 

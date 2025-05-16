@@ -1,5 +1,5 @@
 use super::HttpErrorData;
-use crate::HttpError;
+use crate::Error;
 use explicit_error_derive::JSONDisplay;
 use serde::{Serialize, Serializer};
 use std::{error::Error as StdError, fmt::Debug};
@@ -9,7 +9,7 @@ use std::{error::Error as StdError, fmt::Debug};
 /// It is highly recommended to implement the derive [Error](crate::Error) which generates the boilerplate
 /// for your domain errors. Otherwise you can implement the [ToDomainError] trait.
 ///
-/// [HttpError] implements `From<DomainError>`, use `?` and `.into()` in functions and closures to convert to the [HttpError::Domain] variant.
+/// [Error] implements `From<DomainError>`, use `?` and `.into()` in functions and closures to convert to the [Error::Domain] variant.
 /// # Examples
 /// [DomainError] can be generated because of a predicate
 /// ```rust
@@ -20,9 +20,9 @@ use std::{error::Error as StdError, fmt::Debug};
 /// # use actix_web::http::StatusCode;
 /// # use problem_details::ProblemDetails;
 /// # use http::Uri;
-/// use explicit_error::{HttpError, prelude::*};
+/// use explicit_error::{Error, prelude::*};
 ///
-/// #[derive(Error, Debug)]
+/// #[derive(HttpError, Debug)]
 /// # #[explicit_error(StdError)]
 ///  enum NotFoundError {
 ///     Bar(String)
@@ -44,7 +44,7 @@ use std::{error::Error as StdError, fmt::Debug};
 ///     }
 /// }
 ///
-/// fn business_logic(public_identifier: &str) -> Result<(), HttpError> {     
+/// fn business_logic(public_identifier: &str) -> Result<(), Error> {     
 ///     let entity = fetch_bar(&public_identifier).map_err_or_bug(|e|
 ///         match e {
 ///             sqlx::Error::RowNotFound => Ok(
@@ -70,7 +70,7 @@ pub struct DomainError {
     pub source: Option<Box<dyn StdError>>,
 }
 
-impl From<DomainError> for HttpError {
+impl From<DomainError> for Error {
     fn from(value: DomainError) -> Self {
         Self::Domain(Box::new(value))
     }
@@ -101,7 +101,7 @@ impl StdError for DomainError {
 
 pub trait ToDomainError
 where
-    Self: Sized + StdError + 'static + Into<HttpError>,
+    Self: Sized + StdError + 'static + Into<Error>,
     for<'a> &'a Self: Into<HttpErrorData>,
 {
     fn to_domain_error(self) -> DomainError {

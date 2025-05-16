@@ -1,15 +1,15 @@
 use actix_web::{App, HttpResponse, HttpServer, get};
 use env_logger::Env;
-use explicit_error::{Bug, DeriveHandlerError, HandlerError, HttpError};
+use explicit_error::{Bug, DeriveHandlerError, Error, HandlerError};
 use log::{debug, error};
 use problem_details::ProblemDetails;
 use serde::Serialize;
 
 #[derive(DeriveHandlerError)]
-struct MyHandlerError(HttpError);
+struct MyHandlerError(Error);
 
 impl HandlerError for MyHandlerError {
-    fn from_http_error(value: HttpError) -> Self {
+    fn from_http_error(value: Error) -> Self {
         MyHandlerError(value)
     }
 
@@ -25,7 +25,7 @@ impl HandlerError for MyHandlerError {
             .with_title("Internal server error")
     }
 
-    fn http_error(&self) -> &HttpError {
+    fn http_error(&self) -> &Error {
         &self.0
     }
 
@@ -68,7 +68,7 @@ mod service {
     use explicit_error::{HttpErrorData, Result, prelude::*};
     use problem_details::ProblemDetails;
 
-    #[derive(Error, Debug)]
+    #[derive(HttpError, Debug)]
     pub enum MyDomainError {
         EntityNotFound(String),
         Validation,
@@ -100,7 +100,7 @@ mod service {
         }
     }
 
-    #[derive(Error, Debug)]
+    #[derive(HttpError, Debug)]
     pub struct SubDomainError {
         x99: &'static str,
     }

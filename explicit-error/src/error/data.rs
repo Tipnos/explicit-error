@@ -1,11 +1,11 @@
-use super::HttpError;
+use super::Error;
 use erased_serde::Serialize as DynSerialize;
 use explicit_error_derive::JSONDisplay;
 use serde::Serialize;
 
 /// Self-sufficient container to both log an error and generate its http response.
 ///
-/// [HttpError] implements `From<HttpErrorData>`, use `?` and `.into()` in functions and closures to convert to the [HttpError::Domain] variant.
+/// [Error] implements `From<HttpErrorData>`, use `?` and `.into()` in functions and closures to convert to the [Error::Domain] variant.
 ///
 /// Regarding the web framework you use, its shape can be different.
 /// # Examples
@@ -16,7 +16,7 @@ use serde::Serialize;
 /// # use http::Uri;
 /// use explicit_error::prelude::*;
 ///
-/// #[derive(Error, Debug)]
+/// #[derive(HttpError, Debug)]
 /// enum MyDomainError {
 ///     Foo,
 /// }
@@ -36,14 +36,14 @@ use serde::Serialize;
 /// ```
 ///
 /// Domain errors sometimes don't require to be extracted in either a struct or enum variant (eg: middleware errors).
-/// You can generate [HttpError::Domain] variant with an [HttpErrorData]
+/// You can generate [Error::Domain] variant with an [HttpErrorData]
 /// ```rust
 /// # use actix_web::http::StatusCode;
 /// # use problem_details::ProblemDetails;
 /// # use http::Uri;
-/// use explicit_error::{HttpError, prelude::*};
+/// use explicit_error::{Error, prelude::*};
 ///
-/// fn business_logic() -> Result<(), HttpError> {
+/// fn business_logic() -> Result<(), Error> {
 ///     Err(HttpErrorData::new(
 ///         StatusCode::FORBIDDEN,
 ///         ProblemDetails::new()
@@ -60,7 +60,7 @@ use serde::Serialize;
 /// # use actix_web::http::StatusCode;
 /// # use problem_details::ProblemDetails;
 /// # use http::Uri;
-/// use explicit_error::{prelude::*, HttpErrorData, HttpError};
+/// use explicit_error::{prelude::*, HttpErrorData, Error};
 ///
 /// fn forbidden() -> HttpErrorData {
 ///     HttpErrorData::new(
@@ -72,7 +72,7 @@ use serde::Serialize;
 /// }
 ///
 /// // context can be added by the caller to add information in log to help debugging
-/// fn business_logic() -> Result<(), HttpError> {
+/// fn business_logic() -> Result<(), Error> {
 ///     Err(42).map_err(|e|
 ///         forbidden().with_context(
 ///             format!("Return a forbidden instead of 500 to avoid leaking implementation details: {e}")
@@ -153,9 +153,9 @@ impl HttpErrorData {
     }
 }
 
-impl From<HttpErrorData> for HttpError {
+impl From<HttpErrorData> for Error {
     fn from(value: HttpErrorData) -> Self {
-        HttpError::Domain(Box::new(super::DomainError {
+        Error::Domain(Box::new(super::DomainError {
             data: value,
             source: None,
         }))
