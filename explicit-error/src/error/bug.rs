@@ -32,7 +32,7 @@ use std::{backtrace::Backtrace, error::Error as StdError};
 /// When pattern matching on an error you can generate a [Bug] and attach the source to it.
 /// Note: The display implementation print the source's errors chain.
 /// ```rust
-/// # use explicit_error::{prelude::*, Error, HttpErrorData, Bug};
+/// # use explicit_error::{prelude::*, Error, HttpError, Bug};
 /// # use problem_details::ProblemDetails;
 /// # use actix_web::http::StatusCode;
 /// use explicit_error::Result;
@@ -45,16 +45,16 @@ use std::{backtrace::Backtrace, error::Error as StdError};
 ///     })
 /// }
 ///
-/// # #[derive(HttpError, Debug)]
+/// # #[derive(HttpErrorDerive, Debug)]
 /// # #[explicit_error(StdError)]
 /// # enum MyEntitysError {
 /// #    NotFound,
 /// # }
 ///
-/// # impl From<&MyEntitysError> for HttpErrorData {
+/// # impl From<&MyEntitysError> for HttpError {
 /// #     fn from(value: &MyEntitysError) -> Self {
 /// #         match value {
-/// #             MyEntitysError::NotFound => HttpErrorData {
+/// #             MyEntitysError::NotFound => HttpError {
 /// #               http_status_code: StatusCode::NOT_FOUND,
 /// #                 public: Box::new(
 /// #                     ProblemDetails::new()
@@ -152,7 +152,7 @@ impl Bug {
     /// On a [Result](std::result::Result) use [map_err_or_bug](crate::ResultBug::map_err_or_bug) to be more concise.
     /// # Examples
     /// ```rust
-    /// # use explicit_error::{prelude::*, Error, HttpErrorData, Bug};
+    /// # use explicit_error::{prelude::*, Error, HttpError, Bug};
     /// # use problem_details::ProblemDetails;
     /// # use actix_web::http::StatusCode;
     /// use explicit_error::Result;
@@ -165,16 +165,16 @@ impl Bug {
     ///     })
     /// }
     ///
-    /// # #[derive(HttpError, Debug)]
+    /// # #[derive(HttpErrorDerive, Debug)]
     /// # #[explicit_error(StdError)]
     /// # enum MyEntitysError {
     /// #    NotFound,
     /// # }
     ///
-    /// # impl From<&MyEntitysError> for HttpErrorData {
+    /// # impl From<&MyEntitysError> for HttpError {
     /// #     fn from(value: &MyEntitysError) -> Self {
     /// #         match value {
-    /// #             MyEntitysError::NotFound => HttpErrorData {
+    /// #             MyEntitysError::NotFound => HttpError {
     /// #               http_status_code: StatusCode::NOT_FOUND,
     /// #                 public: Box::new(
     /// #                     ProblemDetails::new()

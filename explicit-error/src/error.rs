@@ -1,10 +1,8 @@
 mod bug;
-mod data;
 mod domain;
 
 use crate::unwrap_failed;
 pub use bug::*;
-pub use data::*;
 pub use domain::*;
 use std::error::Error as StdError;
 
@@ -33,19 +31,19 @@ use std::error::Error as StdError;
 ///     Err(sqlx::Error::RowNotFound)
 /// }
 ///
-/// #[derive(HttpError, Debug)]
+/// #[derive(HttpErrorDerive, Debug)]
 /// # #[explicit_error(StdError)]
 ///  enum NotFoundError {
 ///     Bar(String)
 ///  }
 ///
-///  impl From<&NotFoundError> for HttpErrorData {
+///  impl From<&NotFoundError> for HttpError {
 ///     fn from(value: &NotFoundError) -> Self {
 ///         let (label, id) = match value {
 ///             NotFoundError::Bar(public_identifier) => ("Bar", public_identifier)
 ///         };
 ///
-///         HttpErrorData::new(
+///         HttpError::new(
 ///             StatusCode::NOT_FOUND,
 ///             ProblemDetails::new()
 ///                 .with_type(Uri::from_static("/errors/not-found"))
@@ -55,8 +53,8 @@ use std::error::Error as StdError;
 ///     }
 /// }
 ///
-/// # fn forbidden() -> HttpErrorData {
-/// #    HttpErrorData::new(
+/// # fn forbidden() -> HttpError {
+/// #    HttpError::new(
 /// #        StatusCode::FORBIDDEN,
 /// #        ProblemDetails::new()
 /// #            .with_type(Uri::from_static("/errors/generic#forbidden"))
@@ -130,7 +128,7 @@ pub(crate) fn errors_chain_debug(source: &dyn StdError) -> String {
 /// To use this trait on [Result] import the prelude `use explicit_error::prelude::*`
 pub trait ResultBug<T, S> {
     /// Convert with a closure any error wrapped in a [Result] to an [Error]. Returning an [Ok] convert the wrapped type to
-    /// an [Error] usually it is either a [DomainError] or [HttpErrorData] ending as [Error::Domain].
+    /// an [Error] usually it is either a [DomainError] or [HttpError] ending as [Error::Domain].
     /// Returning an [Err] generates a [Bug] with the orginal error has its source.
     /// # Examples
     /// Pattern match to convert to an [Error::Domain]
@@ -156,17 +154,17 @@ pub trait ResultBug<T, S> {
     /// #    Err(sqlx::Error::RowNotFound)
     /// # }
     ///
-    /// #[derive(HttpError, Debug)]
+    /// #[derive(HttpErrorDerive, Debug)]
     /// # #[explicit_error(StdError)]
     /// enum NotFoundError {
     ///     Bar(String)
     /// }
-    /// # impl From<&NotFoundError> for HttpErrorData {
+    /// # impl From<&NotFoundError> for HttpError {
     /// #   fn from(value: &NotFoundError) -> Self {
     /// #       let (label, id) = match value {
     /// #           NotFoundError::Bar(public_identifier) => ("Bar", public_identifier)
     /// #       };
-    /// #       HttpErrorData::new(
+    /// #       HttpError::new(
     /// #           StatusCode::NOT_FOUND,
     /// #           ProblemDetails::new()
     /// #               .with_type(Uri::from_static("/errors/not-found"))
@@ -198,17 +196,17 @@ pub trait ResultBug<T, S> {
     /// # fn fetch_bar(public_identifier: &str) -> Result<(), sqlx::Error> {
     /// #    Err(sqlx::Error::RowNotFound)
     /// # }
-    /// # #[derive(HttpError, Debug)]
+    /// # #[derive(HttpErrorDerive, Debug)]
     /// # #[explicit_error(StdError)]
     /// # enum NotFoundError {
     /// #    Bar(String)
     /// # }
-    /// # impl From<&NotFoundError> for HttpErrorData {
+    /// # impl From<&NotFoundError> for HttpError {
     /// #   fn from(value: &NotFoundError) -> Self {
     /// #       let (label, id) = match value {
     /// #           NotFoundError::Bar(public_identifier) => ("Bar", public_identifier)
     /// #       };
-    /// #       HttpErrorData::new(
+    /// #       HttpError::new(
     /// #           StatusCode::NOT_FOUND,
     /// #           ProblemDetails::new()
     /// #               .with_type(Uri::from_static("/errors/not-found"))
@@ -217,8 +215,8 @@ pub trait ResultBug<T, S> {
     /// #       )
     /// #   }
     /// # }
-    /// fn forbidden() -> HttpErrorData {
-    ///     HttpErrorData::new(
+    /// fn forbidden() -> HttpError {
+    ///     HttpError::new(
     ///         StatusCode::FORBIDDEN,
     ///         ProblemDetails::new()
     ///             .with_type(Uri::from_static("/errors/generic#forbidden"))

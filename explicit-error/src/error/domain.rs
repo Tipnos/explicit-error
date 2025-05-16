@@ -1,5 +1,4 @@
-use super::HttpErrorData;
-use crate::Error;
+use crate::{Error, http::HttpError};
 use explicit_error_derive::JSONDisplay;
 use serde::{Serialize, Serializer};
 use std::{error::Error as StdError, fmt::Debug};
@@ -22,19 +21,19 @@ use std::{error::Error as StdError, fmt::Debug};
 /// # use http::Uri;
 /// use explicit_error::{Error, prelude::*};
 ///
-/// #[derive(HttpError, Debug)]
+/// #[derive(HttpErrorDerive, Debug)]
 /// # #[explicit_error(StdError)]
 ///  enum NotFoundError {
 ///     Bar(String)
 ///  }
 ///
-///  impl From<&NotFoundError> for HttpErrorData {
+///  impl From<&NotFoundError> for HttpError {
 ///     fn from(value: &NotFoundError) -> Self {
 ///         let (label, id) = match value {
 ///             NotFoundError::Bar(public_identifier) => ("Bar", public_identifier)
 ///         };
 ///
-///         HttpErrorData::new(
+///         HttpError::new(
 ///             StatusCode::NOT_FOUND,
 ///             ProblemDetails::new()
 ///                 .with_type(Uri::from_static("/errors/not-found"))
@@ -65,7 +64,7 @@ use std::{error::Error as StdError, fmt::Debug};
 #[derive(Debug, Serialize, JSONDisplay)]
 pub struct DomainError {
     #[serde(flatten)]
-    pub(crate) output: HttpErrorData,
+    pub(crate) output: HttpError,
     #[serde(serialize_with = "serialize_source_box")]
     pub source: Option<Box<dyn StdError>>,
 }
@@ -77,11 +76,11 @@ impl From<DomainError> for Error {
 }
 
 impl DomainError {
-    pub fn output(&self) -> &HttpErrorData {
+    pub fn output(&self) -> &HttpError {
         &self.output
     }
 
-    pub fn split(self) -> (HttpErrorData, Option<Box<dyn StdError>>) {
+    pub fn split(self) -> (HttpError, Option<Box<dyn StdError>>) {
         (self.output, self.source)
     }
 
@@ -102,7 +101,7 @@ impl StdError for DomainError {
 pub trait ToDomainError
 where
     Self: Sized + StdError + 'static + Into<Error>,
-    for<'a> &'a Self: Into<HttpErrorData>,
+    for<'a> &'a Self: Into<HttpError>,
 {
     fn to_domain_error(self) -> DomainError {
         DomainError {
@@ -115,7 +114,7 @@ where
         #[derive(Serialize)]
         struct S<'s> {
             #[serde(flatten)]
-            output: HttpErrorData,
+            output: HttpError,
             #[serde(serialize_with = "serialize_source_dyn")]
             pub source: &'s dyn StdError,
         }

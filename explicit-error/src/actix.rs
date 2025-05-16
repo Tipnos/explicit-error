@@ -1,4 +1,4 @@
-use crate::{DomainError, Error, HttpErrorData};
+use crate::{DomainError, Error, http::HttpError};
 use actix_web::{HttpResponse, ResponseError, http::StatusCode};
 use serde::Serializer;
 
@@ -17,7 +17,7 @@ impl Into<HttpResponse> for &DomainError {
     }
 }
 
-impl Into<HttpResponse> for &HttpErrorData {
+impl Into<HttpResponse> for &HttpError {
     fn into(self) -> HttpResponse {
         HttpResponse::build(self.http_status_code).json(&self.public)
     }

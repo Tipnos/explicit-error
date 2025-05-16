@@ -1,11 +1,11 @@
 use actix_web::{App, HttpResponse, HttpServer, get};
 use env_logger::Env;
-use explicit_error::{Bug, DeriveHandlerError, Error, HandlerError};
+use explicit_error::{Bug, Error, HandlerError, HandlerErrorDerive};
 use log::{debug, error};
 use problem_details::ProblemDetails;
 use serde::Serialize;
 
-#[derive(DeriveHandlerError)]
+#[derive(HandlerErrorDerive)]
 struct MyHandlerError(Error);
 
 impl HandlerError for MyHandlerError {
@@ -65,19 +65,19 @@ async fn main() -> std::io::Result<()> {
 mod service {
     use crate::db;
     use actix_web::http::StatusCode;
-    use explicit_error::{HttpErrorData, Result, prelude::*};
+    use explicit_error::{HttpError, Result, prelude::*};
     use problem_details::ProblemDetails;
 
-    #[derive(HttpError, Debug)]
+    #[derive(HttpErrorDerive, Debug)]
     pub enum MyDomainError {
         EntityNotFound(String),
         Validation,
     }
 
-    impl From<&MyDomainError> for HttpErrorData {
+    impl From<&MyDomainError> for HttpError {
         fn from(value: &MyDomainError) -> Self {
             match value {
-                MyDomainError::EntityNotFound(name) => HttpErrorData {
+                MyDomainError::EntityNotFound(name) => HttpError {
                     http_status_code: StatusCode::NOT_FOUND,
                     public: Box::new(
                         ProblemDetails::new()
@@ -87,7 +87,7 @@ mod service {
                     ),
                     context: None,
                 },
-                MyDomainError::Validation => HttpErrorData {
+                MyDomainError::Validation => HttpError {
                     http_status_code: StatusCode::BAD_REQUEST,
                     public: Box::new(
                         ProblemDetails::new()
@@ -100,14 +100,14 @@ mod service {
         }
     }
 
-    #[derive(HttpError, Debug)]
+    #[derive(HttpErrorDerive, Debug)]
     pub struct SubDomainError {
         x99: &'static str,
     }
 
-    impl From<&SubDomainError> for HttpErrorData {
+    impl From<&SubDomainError> for HttpError {
         fn from(value: &SubDomainError) -> Self {
-            HttpErrorData {
+            HttpError {
                 http_status_code: StatusCode::NOT_FOUND,
                 public: Box::new(
                     ProblemDetails::new()

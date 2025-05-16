@@ -5,7 +5,7 @@ use serde::Serialize;
 
 /// Self-sufficient container to both log an error and generate its http response.
 ///
-/// [Error] implements `From<HttpErrorData>`, use `?` and `.into()` in functions and closures to convert to the [Error::Domain] variant.
+/// [Error] implements `From<HttpError>`, use `?` and `.into()` in functions and closures to convert to the [Error::Domain] variant.
 ///
 /// Regarding the web framework you use, its shape can be different.
 /// # Examples
@@ -16,15 +16,15 @@ use serde::Serialize;
 /// # use http::Uri;
 /// use explicit_error::prelude::*;
 ///
-/// #[derive(HttpError, Debug)]
+/// #[derive(HttpErrorDerive, Debug)]
 /// enum MyDomainError {
 ///     Foo,
 /// }
 ///
-/// impl From<&MyDomainError> for HttpErrorData {
+/// impl From<&MyDomainError> for HttpError {
 ///     fn from(value: &MyDomainError) -> Self {
 ///         match value {
-///             MyDomainError::Foo => HttpErrorData::new(
+///             MyDomainError::Foo => HttpError::new(
 ///                     StatusCode::BAD_REQUEST,
 ///                     ProblemDetails::new()
 ///                         .with_type(Uri::from_static("/errors/my-domain/foo"))
@@ -36,7 +36,7 @@ use serde::Serialize;
 /// ```
 ///
 /// Domain errors sometimes don't require to be extracted in either a struct or enum variant (eg: middleware errors).
-/// You can generate [Error::Domain] variant with an [HttpErrorData]
+/// You can generate [Error::Domain] variant with an [HttpError]
 /// ```rust
 /// # use actix_web::http::StatusCode;
 /// # use problem_details::ProblemDetails;
@@ -44,7 +44,7 @@ use serde::Serialize;
 /// use explicit_error::{Error, prelude::*};
 ///
 /// fn business_logic() -> Result<(), Error> {
-///     Err(HttpErrorData::new(
+///     Err(HttpError::new(
 ///         StatusCode::FORBIDDEN,
 ///         ProblemDetails::new()
 ///             .with_type(Uri::from_static("/errors/generic#forbidden"))
@@ -60,10 +60,10 @@ use serde::Serialize;
 /// # use actix_web::http::StatusCode;
 /// # use problem_details::ProblemDetails;
 /// # use http::Uri;
-/// use explicit_error::{prelude::*, HttpErrorData, Error};
+/// use explicit_error::{prelude::*, HttpError, Error};
 ///
-/// fn forbidden() -> HttpErrorData {
-///     HttpErrorData::new(
+/// fn forbidden() -> HttpError {
+///     HttpError::new(
 ///         StatusCode::FORBIDDEN,
 ///         ProblemDetails::new()
 ///             .with_type(Uri::from_static("/errors/generic#forbidden"))
@@ -81,7 +81,7 @@ use serde::Serialize;
 /// }
 /// ```
 #[derive(Serialize, JSONDisplay)]
-pub struct HttpErrorData {
+pub struct HttpError {
     #[cfg(feature = "actix-web")]
     #[serde(serialize_with = "crate::actix::serialize_http_status_code")]
     pub http_status_code: actix_web::http::StatusCode,
@@ -89,17 +89,17 @@ pub struct HttpErrorData {
     pub context: Option<String>,
 }
 
-impl HttpErrorData {
-    /// Generate an [HttpErrorData] without a context. To add a context
-    /// use [with_context](HttpErrorData::with_context) afterwards.
+impl HttpError {
+    /// Generate an [HttpError] without a context. To add a context
+    /// use [with_context](HttpError::with_context) afterwards.
     /// # Examples
     /// ```rust
-    /// # use explicit_error::{Result, HttpErrorData};
+    /// # use explicit_error::{Result, HttpError};
     /// # use actix_web::http::StatusCode;
     /// # use problem_details::ProblemDetails;
     /// # use http::Uri;
-    /// fn forbidden() -> HttpErrorData {
-    ///     HttpErrorData::new(
+    /// fn forbidden() -> HttpError {
+    ///     HttpError::new(
     ///         StatusCode::UNAUTHORIZED,
     ///         ProblemDetails::new()
     ///             .with_type(Uri::from_static("/errors/forbidden"))
@@ -119,11 +119,11 @@ impl HttpErrorData {
         }
     }
 
-    /// Add a context to an [HttpErrorData], override if one was set. The context appears in display
+    /// Add a context to an [HttpError], override if one was set. The context appears in display
     /// but not in the http response.
     /// # Examples
     /// ```rust
-    /// # use explicit_error::{Result, HttpErrorData};
+    /// # use explicit_error::{Result, HttpError};
     /// # use actix_web::http::StatusCode;
     /// # use problem_details::ProblemDetails;
     /// # use http::Uri;
@@ -134,8 +134,8 @@ impl HttpErrorData {
     ///     Ok(())
     /// }
     ///
-    /// fn forbidden() -> HttpErrorData {
-    ///     HttpErrorData::new(
+    /// fn forbidden() -> HttpError {
+    ///     HttpError::new(
     ///         StatusCode::UNAUTHORIZED,
     ///         ProblemDetails::new()
     ///             .with_type(Uri::from_static("/errors/forbidden"))
@@ -153,8 +153,8 @@ impl HttpErrorData {
     }
 }
 
-impl From<HttpErrorData> for Error {
-    fn from(value: HttpErrorData) -> Self {
+impl From<HttpError> for Error {
+    fn from(value: HttpError) -> Self {
         Error::Domain(Box::new(super::DomainError {
             output: value,
             source: None,
@@ -162,8 +162,8 @@ impl From<HttpErrorData> for Error {
     }
 }
 
-impl std::fmt::Debug for HttpErrorData {
+impl std::fmt::Debug for HttpError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "HttpErrorData{}", self)
+        write!(f, "HttpError{}", self)
     }
 }
