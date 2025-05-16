@@ -13,7 +13,7 @@ impl ResponseError for Error {
 
 impl Into<HttpResponse> for &DomainError {
     fn into(self) -> HttpResponse {
-        HttpResponse::build(self.data.http_status_code).json(&self.data.public)
+        HttpResponse::build(self.output.http_status_code).json(&self.output.public)
     }
 }
 

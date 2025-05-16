@@ -30,7 +30,7 @@ impl HandlerError for MyHandlerError {
     }
 
     fn public_domain_response(error: &explicit_error::DomainError) {
-        if error.data().http_status_code.as_u16() < 500 {
+        if error.output().http_status_code.as_u16() < 500 {
             debug!("{error}");
         } else {
             error!("{error}");

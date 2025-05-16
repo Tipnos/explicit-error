@@ -65,7 +65,7 @@ use std::{error::Error as StdError, fmt::Debug};
 #[derive(Debug, Serialize, JSONDisplay)]
 pub struct DomainError {
     #[serde(flatten)]
-    pub(crate) data: HttpErrorData,
+    pub(crate) output: HttpErrorData,
     #[serde(serialize_with = "serialize_source_box")]
     pub source: Option<Box<dyn StdError>>,
 }
@@ -77,17 +77,17 @@ impl From<DomainError> for Error {
 }
 
 impl DomainError {
-    pub fn data(&self) -> &HttpErrorData {
-        &self.data
+    pub fn output(&self) -> &HttpErrorData {
+        &self.output
     }
 
     pub fn split(self) -> (HttpErrorData, Option<Box<dyn StdError>>) {
-        (self.data, self.source)
+        (self.output, self.source)
     }
 
     pub fn with_context<D: std::fmt::Display>(self, context: D) -> Self {
         Self {
-            data: self.data.with_context(context),
+            output: self.output.with_context(context),
             source: self.source,
         }
     }
@@ -106,7 +106,7 @@ where
 {
     fn to_domain_error(self) -> DomainError {
         DomainError {
-            data: (&self).into(),
+            output: (&self).into(),
             source: Some(Box::new(self)),
         }
     }
@@ -115,7 +115,7 @@ where
         #[derive(Serialize)]
         struct S<'s> {
             #[serde(flatten)]
-            data: HttpErrorData,
+            output: HttpErrorData,
             #[serde(serialize_with = "serialize_source_dyn")]
             pub source: &'s dyn StdError,
         }
@@ -124,7 +124,7 @@ where
             f,
             "{}",
             serde_json::json!(S {
-                data: self.into(),
+                output: self.into(),
                 source: self,
             })
         )

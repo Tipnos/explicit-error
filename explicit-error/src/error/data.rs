@@ -156,7 +156,7 @@ impl HttpErrorData {
 impl From<HttpErrorData> for Error {
     fn from(value: HttpErrorData) -> Self {
         Error::Domain(Box::new(super::DomainError {
-            data: value,
+            output: value,
             source: None,
         }))
     }
