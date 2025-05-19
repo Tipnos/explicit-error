@@ -1,88 +1,8 @@
-use super::Error;
+use crate::Domain;
+use crate::Error;
 use serde::{Serialize, Serializer};
 use std::{backtrace::Backtrace, error::Error as StdError};
 
-/// Wrapper that capture a [backtrace](std::backtrace) for errors that ends up as an http 500 internal server error.
-///
-/// [Error] implements `From<Bug>`, use `?` and `.into()` in functions and closures to convert to the [Error::Bug] variant.
-///
-/// To set up the log and http response body of a [Bug] implement [public_bug_response](crate::HandlerError::public_bug_response) of the [HandlerError](crate::HandlerError) trait.
-/// # Examples
-/// You can generate a [Bug] without source and context relying on the backtrace to help debugging.
-/// ```rust
-/// # use explicit_error_http::{Result, Bug};
-/// # fn doc() -> Result<()> {
-/// if 1 < 2 {
-///     Err(Bug::new())?;
-/// }
-/// # Ok(())
-/// # }
-/// ```
-/// To force the backtrace capture (see: [Backtrace::force_capture](std::backtrace::Backtrace::force_capture)) use [new_force](Bug::new_force).
-/// ```rust
-/// # use explicit_error_http::{Result, Bug};
-/// # fn doc() -> Result<()> {
-/// if 1 < 2 {
-///     Err(Bug::new_force())?;
-/// }
-/// # Ok(())
-/// # }
-/// ```
-///
-/// When pattern matching on an error you can generate a [Bug] and attach the source to it.
-/// Note: The display implementation print the source's errors chain.
-/// ```rust
-/// # use explicit_error_http::{prelude::*, Error, HttpError, Bug};
-/// # use problem_details::ProblemDetails;
-/// # use actix_web::http::StatusCode;
-/// use explicit_error_http::Result;
-///
-/// fn fetch() -> Result<()> {
-///     let sqlx_error = sqlx::Error::RowNotFound;
-///     Err(match sqlx_error {
-///         sqlx::Error::RowNotFound => Error::from(MyEntitysError::NotFound),
-///         _ => Bug::new().with_source(sqlx_error).into()
-///     })
-/// }
-///
-/// # #[derive(HttpErrorDerive, Debug)]
-/// # #[explicit_error_http(StdError)]
-/// # enum MyEntitysError {
-/// #    NotFound,
-/// # }
-///
-/// # impl From<&MyEntitysError> for HttpError {
-/// #     fn from(value: &MyEntitysError) -> Self {
-/// #         match value {
-/// #             MyEntitysError::NotFound => HttpError {
-/// #               http_status_code: StatusCode::NOT_FOUND,
-/// #                 public: Box::new(
-/// #                     ProblemDetails::new()
-/// #                         .with_type(http::Uri::from_static("/errors/my-entity/not-found"))
-/// #                         .with_title("Not found"),
-/// #                     ),
-/// #                 context: Some("Some usefull info to debug".to_string()),
-/// #             },
-/// #         }
-/// #     }
-/// # }
-/// ```
-///
-/// You can also generate a [Bug] from a [Result] or an [Option].
-/// The prelude must be imported first with `use explicit_error_http::prelude::*`.
-/// ```rust
-/// # use std::fs::File;
-/// use explicit_error_http::{Error, prelude::*};
-///
-/// fn foo() -> Result<(), Error> {
-///     let option: Option<u8> = None;
-///     option.bug()?;
-///
-///     let file: Result<File, std::io::Error> = File::open("foo.conf");
-///     file.bug().with_context("Configuration file foo.conf is missing.")?;
-///     # Ok(())
-/// }
-/// ```
 #[derive(Debug, Serialize)]
 pub struct Bug {
     #[serde(serialize_with = "serialize_source")]
@@ -92,7 +12,10 @@ pub struct Bug {
     context: Option<String>,
 }
 
-impl From<Bug> for Error {
+impl<D> From<Bug> for Error<D>
+where
+    D: Domain,
+{
     fn from(value: Bug) -> Self {
         Error::Bug(value)
     }

@@ -1,27 +1,55 @@
-use crate::{Error, http::HttpError};
+use crate::error::HttpError;
+use explicit_error::{Domain, Error};
 use explicit_error_http_derive::JSONDisplay;
 use serde::{Serialize, Serializer};
 use std::{error::Error as StdError, fmt::Debug};
 
-/// Wrapper for errors of your domain that return informative feedback to the users.
+/// Wrapper for errors of your domain that return informative feedback to the users. It is used as the [explicit_error::Error::Domain] variant generic type.
 ///
-/// It is highly recommended to implement the derive [Error](crate::Error) which generates the boilerplate
+/// It is highly recommended to implement the derive [HttpError](crate::derive::HttpError) which generates the boilerplate
 /// for your domain errors. Otherwise you can implement the [ToDomainError] trait.
 ///
-/// [Error] implements `From<DomainError>`, use `?` and `.into()` in functions and closures to convert to the [Error::Domain] variant.
+/// [Error](crate::Error) implements `From<DomainError>`, use `?` and `.into()` in functions and closures to convert to the [Error::Domain] variant.
 /// # Examples
 /// [DomainError] can be generated because of a predicate
 /// ```rust
+/// # use actix_web::http::StatusCode;
+/// use explicit_error_http::{HttpError, Result, derive::HttpError};
 ///
+/// #[derive(Debug, HttpError)]
+/// enum MyError {
+///     Domain,
+/// }
+///
+/// impl From<&MyError> for HttpError {
+///     fn from(value: &MyError) -> Self {
+///         HttpError::new(
+///             StatusCode::BAD_REQUEST,
+///             "My domain error"
+///         )
+///     }
+/// }
+///
+/// fn business_logic() -> Result<()> {
+///     if 1 < 2 {
+///         Err(MyError::Domain)?;
+///     }
+///     
+///     if true {
+///         Err(HttpError::new(StatusCode::FORBIDDEN, "")
+///             .with_context("Usefull context to debug or monitor"))?;
+///     }
+/// #   Ok(())
+/// }
 /// ```
 /// Or from a [Result]
 /// ```rust
 /// # use actix_web::http::StatusCode;
 /// # use problem_details::ProblemDetails;
 /// # use http::Uri;
-/// use explicit_error_http::{Error, prelude::*};
+/// use explicit_error_http::{Error, prelude::*, derive::HttpError};
 ///
-/// #[derive(HttpErrorDerive, Debug)]
+/// #[derive(HttpError, Debug)]
 /// # #[explicit_error_http(StdError)]
 ///  enum NotFoundError {
 ///     Bar(String)
@@ -60,35 +88,36 @@ use std::{error::Error as StdError, fmt::Debug};
 /// }
 /// ```
 /// Or an [Option]
-/// TODO
+/// ```rust
+/// # use explicit_error_http::HttpError;
+/// # use actix_web::http::StatusCode;
+/// Some(12).ok_or(HttpError::new(StatusCode::FORBIDDEN, ""))?;
+/// # Ok::<(), HttpError>(())
+/// ```
 #[derive(Debug, Serialize, JSONDisplay)]
 pub struct DomainError {
     #[serde(flatten)]
-    pub(crate) output: HttpError,
+    pub output: HttpError,
     #[serde(serialize_with = "serialize_source_box")]
     pub source: Option<Box<dyn StdError>>,
 }
 
-impl From<DomainError> for Error {
-    fn from(value: DomainError) -> Self {
-        Self::Domain(Box::new(value))
-    }
-}
-
-impl DomainError {
-    pub fn output(&self) -> &HttpError {
-        &self.output
+impl Domain for DomainError {
+    fn into_source(self) -> Option<Box<dyn std::error::Error>> {
+        self.source
     }
 
-    pub fn split(self) -> (HttpError, Option<Box<dyn StdError>>) {
-        (self.output, self.source)
-    }
-
-    pub fn with_context(self, context: impl std::fmt::Display) -> Self {
+    fn with_context(self, context: impl std::fmt::Display) -> Self {
         Self {
             output: self.output.with_context(context),
             source: self.source,
         }
+    }
+}
+
+impl From<DomainError> for Error<DomainError> {
+    fn from(value: DomainError) -> Self {
+        Self::Domain(Box::new(value))
     }
 }
 
@@ -98,9 +127,10 @@ impl StdError for DomainError {
     }
 }
 
+/// Internally used by [HttpError](crate::derive::HttpError) derive.
 pub trait ToDomainError
 where
-    Self: Sized + StdError + 'static + Into<Error>,
+    Self: Sized + StdError + 'static + Into<Error<DomainError>>,
     for<'a> &'a Self: Into<HttpError>,
 {
     fn to_domain_error(self) -> DomainError {
@@ -145,5 +175,5 @@ fn serialize_source_dyn<S>(source: &dyn StdError, s: S) -> Result<S::Ok, S::Erro
 where
     S: Serializer,
 {
-    s.serialize_str(&crate::errors_chain_debug(source))
+    s.serialize_str(&explicit_error::errors_chain_debug(source))
 }

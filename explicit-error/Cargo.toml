@@ -1,0 +1,7 @@
+[package]
+edition = "2024"
+name = "explicit-error"
+version = "0.1.0"
+
+[dependencies]
+serde = {version = "1.0.219", features = ["derive"]}

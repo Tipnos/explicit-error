@@ -1,11 +1,11 @@
 use actix_web::{App, HttpResponse, HttpServer, get};
 use env_logger::Env;
-use explicit_error_http::{Bug, Error, HandlerError, HandlerErrorDerive};
+use explicit_error_http::{Bug, Error, HandlerError, derive::HandlerError};
 use log::{debug, error};
 use problem_details::ProblemDetails;
 use serde::Serialize;
 
-#[derive(HandlerErrorDerive)]
+#[derive(HandlerError)]
 struct MyHandlerError(Error);
 
 impl HandlerError for MyHandlerError {
@@ -29,8 +29,8 @@ impl HandlerError for MyHandlerError {
         &self.0
     }
 
-    fn public_domain_response(error: &explicit_error_http::DomainError) {
-        if error.output().http_status_code.as_u16() < 500 {
+    fn on_domain_response(error: &explicit_error_http::DomainError) {
+        if error.output.http_status_code.as_u16() < 500 {
             debug!("{error}");
         } else {
             error!("{error}");
@@ -65,10 +65,10 @@ async fn main() -> std::io::Result<()> {
 mod service {
     use crate::db;
     use actix_web::http::StatusCode;
-    use explicit_error_http::{HttpError, Result, prelude::*};
+    use explicit_error_http::{HttpError, Result, derive::HttpError, prelude::*};
     use problem_details::ProblemDetails;
 
-    #[derive(HttpErrorDerive, Debug)]
+    #[derive(HttpError, Debug)]
     pub enum MyDomainError {
         EntityNotFound(String),
         Validation,
@@ -100,7 +100,7 @@ mod service {
         }
     }
 
-    #[derive(HttpErrorDerive, Debug)]
+    #[derive(HttpError, Debug)]
     pub struct SubDomainError {
         x99: &'static str,
     }

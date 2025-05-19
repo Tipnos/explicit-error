@@ -1,17 +1,6 @@
-use crate::{DomainError, Error, http::HttpError};
-use actix_web::{HttpResponse, ResponseError, http::StatusCode};
+use crate::{DomainError, error::HttpError};
+use actix_web::{HttpResponse, http::StatusCode};
 use serde::Serializer;
-
-impl ResponseError for Error {
-    fn error_response(&self) -> actix_web::HttpResponse {
-        match self {
-            Error::Domain(handler_explicit_error_http) => {
-                handler_explicit_error_http.as_ref().into()
-            }
-            Error::Bug(_) => HttpResponse::InternalServerError().finish(),
-        }
-    }
-}
 
 impl Into<HttpResponse> for &DomainError {
     fn into(self) -> HttpResponse {

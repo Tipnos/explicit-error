@@ -1,5 +1,5 @@
 //! This crate provides idiomatic tools to manage errors that generate an HTTP response.
-//! Its chore tenet is to favor inline explicitness while remaining concise.
+//! Based on the [explicit-error](explicit_error) crate, its chore tenet is to favor explicitness by inlining the error output while remaining concise.
 //!
 //! The key features are:
 //! - Explicitly mark any error wrapped in a [Result] as a [Bug]. A backtrace is captured and a 500 Internal Server HTTP response generated.
@@ -8,7 +8,7 @@
 //! - Add context to errors to help debugging.
 //! - Monitor errors before they are transformed into proper HTTP responses. The implementation is different depending on the web framework used, to have more details refer to the `Web frameworks` section.
 //!
-//! # A tour of explicit_error_http
+//! # A tour of explicit-error-http
 //!
 //! The cornerstone of the library is the [Error] type. Use `Result<T, explicit_error_http::Error>`, or equivalently `explicit_error_http::Result<T>`, as the return type of any faillible function returning errors that convert to HTTP response.
 //! Usually, it is mostly functions either called by handlers or middlewares.
@@ -53,15 +53,15 @@
 //! ## Enum and struct
 //!
 //! Domain errors are often represented as enum or struct as they are raised in different places.
-//! To easily enable the conversion to [Error] use the [Error] derive and implement `From<YourError> for HttpError`.
+//! To easily enable the conversion to [Error] use the [HttpError](derive::HttpError) derive and implement `From<YourError> for HttpError`.
 //!
 //! ```rust
 //! use actix_web::http::StatusCode;
 //! use problem_details::ProblemDetails;
 //! use http::Uri;
-//! use explicit_error_http::{prelude::*, Result};
+//! use explicit_error_http::{prelude::*, Result, derive::HttpError};
 //!
-//! #[derive(HttpErrorDerive, Debug)]
+//! #[derive(HttpError, Debug)]
 //! enum MyError {
 //!     Foo,
 //! }
@@ -86,20 +86,19 @@
 //! }
 //! ```
 //!
-//! Note: The [Error] derive implements the conversion to [Error], the impl of [Display](std::fmt::Display) (json format) and [std::error::Error].
+//! Note: The [HttpError](derive::HttpError) derive implements the conversion to [Error], the impl of [Display](std::fmt::Display) (json format) and [std::error::Error].
 //!
 //! # Pattern matching
 //!
 //! One of the drawbacks of using one and only one return type for different domain functions is that callers loose the ability to pattern match on the returned error.
-//! A solution is provided using [try_map_on_source](ResultHttpError::try_map_on_source) on any `Result<T, Error>`, or equivalently `explicit_error_http::Result<T>`.
-//!
+//! A solution is provided using [try_map_on_source](explicit_error::ResultError::try_map_on_source) on any `Result<T, Error>`, or equivalently `explicit_error_http::Result<T>`.
 //!
 //! ```rust
 //! # use actix_web::http::StatusCode;
 //! # use http::Uri;
 //! # use problem_details::ProblemDetails;
-//! # use explicit_error_http::{prelude::*, HttpError, Result};
-//! #[derive(HttpErrorDerive, Debug)]
+//! # use explicit_error_http::{prelude::*, HttpError, Result, derive::HttpError};
+//! #[derive(HttpError, Debug)]
 //! enum MyError {
 //!     Foo,
 //!     Bar,
@@ -141,42 +140,90 @@
 //! }
 //! ```
 //!
-//! Note: under the hood [try_map_on_source](ResultHttpError::try_map_on_source) perform some downcasting.
+//! Note: under the hood [try_map_on_source](explicit_error::ResultError::try_map_on_source) perform some downcasting.
 //!
 //! ## Web frameworks
 //!
-//! explicit_error_http integrates well with most popular web frameworks by providing a feature flag for each of them.
+//! explicit-error-http integrates well with most popular web frameworks by providing a feature flag for each of them.
 //!
 //! ### Actix web
 //!
-//! ### Axum
+//! The type [Error] cannot directly be used as handlers or middlewares returned [Err] variant. A dedicated type is required.
+//! The easiest implementation is to declare a [Newtype](https://doc.rust-lang.org/rust-by-example/generics/new_types.html),
+//! derive it with the [HandlerErrorDerive] and implement the [HandlerError] trait.
 //!
-//! work in progress
+//! ```rust
+//! # use actix_web::{App, HttpResponse, HttpServer, get};
+//! # use env_logger::Env;
+//! # use explicit_error_http::{Bug, Error, HandlerError, derive::HandlerError};
+//! # use log::{debug, error};
+//! # use problem_details::ProblemDetails;
+//! # use serde::Serialize;
+//! #[derive(HandlerError)]
+//! struct MyHandlerError(Error);
 //!
+//! impl HandlerError for MyHandlerError {
+//!     // Used by the derive for conversion
+//!     fn from_http_error(value: Error) -> Self {
+//!         MyHandlerError(value)
+//!     }
+//!
+//!     // Set-up monitoring and your custom HTTP response body for bugs
+//!     fn public_bug_response(bug: &Bug) -> impl Serialize {
+//!         #[cfg(debug_assertions)]
+//!         error!("{bug}");
+//!
+//!         #[cfg(not(debug_assertions))]
+//!         error!("{}", serde_json::json!(bug));
+//!
+//!         ProblemDetails::new()
+//!             .with_type(http::Uri::from_static("/errors/internal-server-error"))
+//!             .with_title("Internal server error")
+//!     }
+//!
+//!     fn http_error(&self) -> &Error {
+//!         &self.0
+//!     }
+//!
+//!     // Monitor domain variant of your errors
+//!     fn on_domain_response(error: &explicit_error_http::DomainError) {
+//!         if error.output.http_status_code.as_u16() < 500 {
+//!             debug!("{error}");
+//!         } else {
+//!             error!("{error}");
+//!         }
+//!     }
+//! }
+//!
+//! #[get("/my-handler")]
+//! async fn my_handler() -> Result<HttpResponse, MyHandlerError> {
+//!     Ok(HttpResponse::Ok().finish())
+//! }
+//! ```
 #[cfg(feature = "actix-web")]
 mod actix;
+mod domain;
 mod error;
 mod handler;
-mod http;
 
+pub use domain::*;
 pub use error::*;
 pub use handler::*;
-pub use http::*;
 
-#[cfg(feature = "actix-web")]
-pub use explicit_error_http_derive::HandlerErrorDerive;
-pub use explicit_error_http_derive::HttpErrorDerive;
+#[doc(hidden)]
+pub use explicit_error::Bug;
 
-fn unwrap_failed(msg: &str, error: &dyn std::fmt::Debug) -> ! {
-    panic!("{msg}: {error:?}")
-}
-
-pub type Result<T> = std::result::Result<T, Error>;
+pub type Error = explicit_error::Error<DomainError>;
+pub type Result<T> = std::result::Result<T, explicit_error::Error<DomainError>>;
 
 pub mod prelude {
-    pub use crate::{
-        HandlerError, OptionBug, ResultBug, ResultBugWithContext, ResultHttpError, ToDomainError,
-        http::HttpError,
-    };
-    pub use explicit_error_http_derive::HttpErrorDerive;
+    pub use crate::{HandlerError, ToDomainError, error::HttpError};
+    pub use explicit_error::{OptionBug, ResultBug, ResultBugWithContext, ResultError};
+    pub use explicit_error_http_derive::HttpError;
+}
+
+pub mod derive {
+    #[cfg(feature = "actix-web")]
+    pub use explicit_error_http_derive::HandlerError;
+    pub use explicit_error_http_derive::HttpError;
 }

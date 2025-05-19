@@ -25,7 +25,7 @@ pub fn derive(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> 
             fn error_response(&self) -> actix_web::HttpResponse {
                 match self.http_error() {
                     explicit_error_http::Error::Domain(d) => {
-                        <Self as HandlerError>::public_domain_response(&d);
+                        <Self as HandlerError>::on_domain_response(&d);
                         d.as_ref().into()
                     },
                     explicit_error_http::Error::Bug(b) => actix_web::HttpResponse::InternalServerError().json(<Self as explicit_error_http::HandlerError>::public_bug_response(b)),
