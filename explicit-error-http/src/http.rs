@@ -1,6 +1,6 @@
 use super::Error;
 use erased_serde::Serialize as DynSerialize;
-use explicit_error_derive::JSONDisplay;
+use explicit_error_http_derive::JSONDisplay;
 use serde::Serialize;
 
 /// Self-sufficient container to both log an error and generate its http response.
@@ -14,7 +14,7 @@ use serde::Serialize;
 /// # use actix_web::http::StatusCode;
 /// # use problem_details::ProblemDetails;
 /// # use http::Uri;
-/// use explicit_error::prelude::*;
+/// use explicit_error_http::prelude::*;
 ///
 /// #[derive(HttpErrorDerive, Debug)]
 /// enum MyDomainError {
@@ -41,7 +41,7 @@ use serde::Serialize;
 /// # use actix_web::http::StatusCode;
 /// # use problem_details::ProblemDetails;
 /// # use http::Uri;
-/// use explicit_error::{Error, prelude::*};
+/// use explicit_error_http::{Error, prelude::*};
 ///
 /// fn business_logic() -> Result<(), Error> {
 ///     Err(HttpError::new(
@@ -60,7 +60,7 @@ use serde::Serialize;
 /// # use actix_web::http::StatusCode;
 /// # use problem_details::ProblemDetails;
 /// # use http::Uri;
-/// use explicit_error::{prelude::*, HttpError, Error};
+/// use explicit_error_http::{prelude::*, HttpError, Error};
 ///
 /// fn forbidden() -> HttpError {
 ///     HttpError::new(
@@ -94,7 +94,7 @@ impl HttpError {
     /// use [with_context](HttpError::with_context) afterwards.
     /// # Examples
     /// ```rust
-    /// # use explicit_error::{Result, HttpError};
+    /// # use explicit_error_http::{Result, HttpError};
     /// # use actix_web::http::StatusCode;
     /// # use problem_details::ProblemDetails;
     /// # use http::Uri;
@@ -123,7 +123,7 @@ impl HttpError {
     /// but not in the http response.
     /// # Examples
     /// ```rust
-    /// # use explicit_error::{Result, HttpError};
+    /// # use explicit_error_http::{Result, HttpError};
     /// # use actix_web::http::StatusCode;
     /// # use problem_details::ProblemDetails;
     /// # use http::Uri;

@@ -1,3 +1,3 @@
 [workspace]
-members = ["explicit-error", "explicit-error-derive"]
+members = ["explicit-error-http", "explicit-error-http-derive"]
 resolver = "2"

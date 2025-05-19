@@ -6,14 +6,14 @@ pub fn derive(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> 
 
     let mut from_impl_generics = input.generics.clone();
     from_impl_generics.params.push(syn::parse_str("EE")?);
-    let explicit_error_where = "EE: Into<explicit_error::Error>";
+    let explicit_error_http_where = "EE: Into<explicit_error_http::Error>";
     let from_where_clause = where_clause.clone().map_or(
-        syn::parse_str(&format!("where {explicit_error_where}"))?,
+        syn::parse_str(&format!("where {explicit_error_http_where}"))?,
         |w| {
             let mut c = w.clone();
 
             c.predicates
-                .push(syn::parse_str(explicit_error_where).unwrap());
+                .push(syn::parse_str(explicit_error_http_where).unwrap());
 
             c
         },
@@ -24,11 +24,11 @@ pub fn derive(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> 
         impl #impl_generics actix_web::ResponseError for #ident #ty_generics #where_clause {
             fn error_response(&self) -> actix_web::HttpResponse {
                 match self.http_error() {
-                    explicit_error::Error::Domain(d) => {
+                    explicit_error_http::Error::Domain(d) => {
                         <Self as HandlerError>::public_domain_response(&d);
                         d.as_ref().into()
                     },
-                    explicit_error::Error::Bug(b) => actix_web::HttpResponse::InternalServerError().json(<Self as explicit_error::HandlerError>::public_bug_response(b)),
+                    explicit_error_http::Error::Bug(b) => actix_web::HttpResponse::InternalServerError().json(<Self as explicit_error_http::HandlerError>::public_bug_response(b)),
                 }
             }
         }
@@ -37,7 +37,7 @@ pub fn derive(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> 
         impl #from_impl_generics From<EE> for #ident #ty_generics #from_where_clause
         {
             fn from(value: EE) -> Self {
-                <Self as explicit_error::HandlerError>::from_http_error(value.into())
+                <Self as explicit_error_http::HandlerError>::from_http_error(value.into())
             }
         }
 

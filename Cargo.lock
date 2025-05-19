@@ -649,13 +649,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "explicit-error"
+name = "explicit-error-http"
 version = "0.1.0"
 dependencies = [
  "actix-web",
  "env_logger",
  "erased-serde",
- "explicit-error-derive",
+ "explicit-error-http-derive",
  "http 1.3.1",
  "log",
  "problem_details",
@@ -665,7 +665,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "explicit-error-derive"
+name = "explicit-error-http-derive"
 version = "0.1.0"
 dependencies = [
  "proc-macro2",

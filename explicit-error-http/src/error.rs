@@ -12,7 +12,7 @@ use std::{error::Error as StdError, fmt::Display};
 /// # use actix_web::http::StatusCode;
 /// # use problem_details::ProblemDetails;
 /// # use http::Uri;
-/// use explicit_error::{Error, prelude::*};
+/// use explicit_error_http::{Error, prelude::*};
 /// fn authz_middleware(public_identifier: &str) -> Result<(), Error> {
 ///     let entity = fetch_bar(&public_identifier).map_err_or_bug(|e|
 ///         match e {
@@ -32,7 +32,7 @@ use std::{error::Error as StdError, fmt::Display};
 /// }
 ///
 /// #[derive(HttpErrorDerive, Debug)]
-/// # #[explicit_error(StdError)]
+/// # #[explicit_error_http(StdError)]
 ///  enum NotFoundError {
 ///     Bar(String)
 ///  }
@@ -71,7 +71,7 @@ pub enum Error {
 impl StdError for Error {
     fn source(&self) -> Option<&(dyn StdError + 'static)> {
         match self {
-            Error::Domain(explicit_error) => Some(explicit_error.as_ref()),
+            Error::Domain(explicit_error_http) => Some(explicit_error_http.as_ref()),
             Error::Bug(bug) => bug.source.as_ref().map(|e| e.as_ref()),
         }
     }
@@ -80,7 +80,7 @@ impl StdError for Error {
 impl Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Error::Domain(explicit_error) => explicit_error.fmt(f),
+            Error::Domain(explicit_error_http) => explicit_error_http.fmt(f),
             Error::Bug(bug) => bug.fmt(f),
         }
     }
@@ -125,7 +125,7 @@ pub(crate) fn errors_chain_debug(source: &dyn StdError) -> String {
     str
 }
 
-/// To use this trait on [Result] import the prelude `use explicit_error::prelude::*`
+/// To use this trait on [Result] import the prelude `use explicit_error_http::prelude::*`
 pub trait ResultBug<T, S> {
     /// Convert with a closure any error wrapped in a [Result] to an [Error]. Returning an [Ok] convert the wrapped type to
     /// an [Error] usually it is either a [DomainError] or [HttpError] ending as [Error::Domain].
@@ -136,7 +136,7 @@ pub trait ResultBug<T, S> {
     /// # use actix_web::http::StatusCode;
     /// # use problem_details::ProblemDetails;
     /// # use http::Uri;
-    /// use explicit_error::{Error, prelude::*};
+    /// use explicit_error_http::{Error, prelude::*};
     /// fn authz_middleware(public_identifier: &str) -> Result<(), Error> {
     ///     let entity = fetch_bar(&public_identifier).map_err_or_bug(|e|
     ///         match e {
@@ -155,7 +155,7 @@ pub trait ResultBug<T, S> {
     /// # }
     ///
     /// #[derive(HttpErrorDerive, Debug)]
-    /// # #[explicit_error(StdError)]
+    /// # #[explicit_error_http(StdError)]
     /// enum NotFoundError {
     ///     Bar(String)
     /// }
@@ -178,7 +178,7 @@ pub trait ResultBug<T, S> {
     /// # use actix_web::http::StatusCode;
     /// # use problem_details::ProblemDetails;
     /// # use http::Uri;
-    /// use explicit_error::{Error, prelude::*};
+    /// use explicit_error_http::{Error, prelude::*};
     /// fn authz_middleware(public_identifier: &str) -> Result<(), Error> {
     ///     let entity = fetch_bar(&public_identifier).map_err_or_bug(|e|
     ///         match e {
@@ -197,7 +197,7 @@ pub trait ResultBug<T, S> {
     /// #    Err(sqlx::Error::RowNotFound)
     /// # }
     /// # #[derive(HttpErrorDerive, Debug)]
-    /// # #[explicit_error(StdError)]
+    /// # #[explicit_error_http(StdError)]
     /// # enum NotFoundError {
     /// #    Bar(String)
     /// # }
@@ -233,7 +233,7 @@ pub trait ResultBug<T, S> {
     /// Convert any [Result::Err] into a [Result::Err] wrapping a [Bug]
     ///  ```rust
     /// # use std::fs::File;
-    /// use explicit_error::{Error, prelude::*};
+    /// use explicit_error_http::{Error, prelude::*};
     ///
     /// fn foo() -> Result<(), Error> {
     ///     let file: Result<File, std::io::Error> = File::open("foo.conf");
@@ -254,7 +254,7 @@ pub trait ResultBug<T, S> {
     /// Convert any [Result::Err] into a [Result::Err] wrapping a [Bug] forcing backtrace capture
     ///  ```rust
     /// # use std::fs::File;
-    /// use explicit_error::{Error, prelude::*};
+    /// use explicit_error_http::{Error, prelude::*};
     ///
     /// fn foo() -> Result<(), Error> {
     ///
@@ -323,7 +323,7 @@ impl<T, S> ResultBug<T, S> for Result<T, S> {
     }
 }
 
-/// To use this trait on [Result] import the prelude `use explicit_error::prelude::*`
+/// To use this trait on [Result] import the prelude `use explicit_error_http::prelude::*`
 pub trait ResultHttpError<T> {
     /// TODO
     fn try_map_on_source<F, S, E>(self, op: F) -> Result<T, Error>
@@ -335,7 +335,7 @@ pub trait ResultHttpError<T> {
     /// Add a context to any variant of an [Error] wrapped in a [Result::Err]
     /// # Examples
     /// ```rust
-    /// use explicit_error::{prelude::*, Bug};
+    /// use explicit_error_http::{prelude::*, Bug};
     /// Err::<(), _>(Bug::new()).with_context("Foo bar");
     /// ```
     fn with_context(self, context: impl Display) -> Result<T, Error>;
@@ -378,19 +378,21 @@ impl<T> ResultHttpError<T> for Result<T, Error> {
         match self {
             Ok(ok) => Ok(ok),
             Err(error) => Err(match error {
-                Error::Domain(explicit_error) => (*explicit_error).with_context(context).into(),
+                Error::Domain(explicit_error_http) => {
+                    (*explicit_error_http).with_context(context).into()
+                }
                 Error::Bug(bug) => bug.with_context(context).into(),
             }),
         }
     }
 }
 
-/// To use this trait on [Option] import the prelude `use explicit_error::prelude::*`
+/// To use this trait on [Option] import the prelude `use explicit_error_http::prelude::*`
 pub trait OptionBug<T> {
     /// Convert an [Option::None] into a [Result::Err] wrapping a [Bug]
     /// ```rust
     /// # use std::fs::File;
-    /// use explicit_error::{Error, prelude::*};
+    /// use explicit_error_http::{Error, prelude::*};
     ///
     /// fn foo() -> Result<(), Error> {
     ///     let option: Option<u8> = None;
@@ -403,7 +405,7 @@ pub trait OptionBug<T> {
     /// Convert an [Option::None] into a [Result::Err] wrapping a [Bug] forcing backtrace capture
     /// ```rust
     /// # use std::fs::File;
-    /// use explicit_error::{Error, prelude::*};
+    /// use explicit_error_http::{Error, prelude::*};
     ///
     /// fn foo() -> Result<(), Error> {
     ///     let option: Option<u8> = None;
@@ -430,12 +432,12 @@ impl<T> OptionBug<T> for Option<T> {
     }
 }
 
-/// To use this trait on [Result] import the prelude `use explicit_error::prelude::*`
+/// To use this trait on [Result] import the prelude `use explicit_error_http::prelude::*`
 pub trait ResultBugWithContext<T> {
     /// Add a context to the [Bug] wrapped in a [Result::Err]
     /// # Examples
     /// ```rust
-    /// use explicit_error::{prelude::*, Bug};
+    /// use explicit_error_http::{prelude::*, Bug};
     /// Err::<(), _>(Bug::new()).with_context("Foo bar");
     /// ```
     fn with_context(self, context: impl Display) -> Result<T, Bug>;

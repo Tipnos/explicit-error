@@ -1,6 +1,6 @@
 [package]
 edition = "2024"
-name = "explicit-error-derive"
+name = "explicit-error-http-derive"
 version = "0.1.0"
 
 [lib]

@@ -1,6 +1,6 @@
 use actix_web::{App, HttpResponse, HttpServer, get};
 use env_logger::Env;
-use explicit_error::{Bug, Error, HandlerError, HandlerErrorDerive};
+use explicit_error_http::{Bug, Error, HandlerError, HandlerErrorDerive};
 use log::{debug, error};
 use problem_details::ProblemDetails;
 use serde::Serialize;
@@ -29,7 +29,7 @@ impl HandlerError for MyHandlerError {
         &self.0
     }
 
-    fn public_domain_response(error: &explicit_error::DomainError) {
+    fn public_domain_response(error: &explicit_error_http::DomainError) {
         if error.output().http_status_code.as_u16() < 500 {
             debug!("{error}");
         } else {
@@ -65,7 +65,7 @@ async fn main() -> std::io::Result<()> {
 mod service {
     use crate::db;
     use actix_web::http::StatusCode;
-    use explicit_error::{HttpError, Result, prelude::*};
+    use explicit_error_http::{HttpError, Result, prelude::*};
     use problem_details::ProblemDetails;
 
     #[derive(HttpErrorDerive, Debug)]

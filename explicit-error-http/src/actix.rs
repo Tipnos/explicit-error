@@ -5,7 +5,9 @@ use serde::Serializer;
 impl ResponseError for Error {
     fn error_response(&self) -> actix_web::HttpResponse {
         match self {
-            Error::Domain(handler_explicit_error) => handler_explicit_error.as_ref().into(),
+            Error::Domain(handler_explicit_error_http) => {
+                handler_explicit_error_http.as_ref().into()
+            }
             Error::Bug(_) => HttpResponse::InternalServerError().finish(),
         }
     }

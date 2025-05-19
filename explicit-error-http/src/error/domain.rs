@@ -1,5 +1,5 @@
 use crate::{Error, http::HttpError};
-use explicit_error_derive::JSONDisplay;
+use explicit_error_http_derive::JSONDisplay;
 use serde::{Serialize, Serializer};
 use std::{error::Error as StdError, fmt::Debug};
 
@@ -19,10 +19,10 @@ use std::{error::Error as StdError, fmt::Debug};
 /// # use actix_web::http::StatusCode;
 /// # use problem_details::ProblemDetails;
 /// # use http::Uri;
-/// use explicit_error::{Error, prelude::*};
+/// use explicit_error_http::{Error, prelude::*};
 ///
 /// #[derive(HttpErrorDerive, Debug)]
-/// # #[explicit_error(StdError)]
+/// # #[explicit_error_http(StdError)]
 ///  enum NotFoundError {
 ///     Bar(String)
 ///  }

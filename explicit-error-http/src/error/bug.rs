@@ -10,7 +10,7 @@ use std::{backtrace::Backtrace, error::Error as StdError};
 /// # Examples
 /// You can generate a [Bug] without source and context relying on the backtrace to help debugging.
 /// ```rust
-/// # use explicit_error::{Result, Bug};
+/// # use explicit_error_http::{Result, Bug};
 /// # fn doc() -> Result<()> {
 /// if 1 < 2 {
 ///     Err(Bug::new())?;
@@ -20,7 +20,7 @@ use std::{backtrace::Backtrace, error::Error as StdError};
 /// ```
 /// To force the backtrace capture (see: [Backtrace::force_capture](std::backtrace::Backtrace::force_capture)) use [new_force](Bug::new_force).
 /// ```rust
-/// # use explicit_error::{Result, Bug};
+/// # use explicit_error_http::{Result, Bug};
 /// # fn doc() -> Result<()> {
 /// if 1 < 2 {
 ///     Err(Bug::new_force())?;
@@ -32,10 +32,10 @@ use std::{backtrace::Backtrace, error::Error as StdError};
 /// When pattern matching on an error you can generate a [Bug] and attach the source to it.
 /// Note: The display implementation print the source's errors chain.
 /// ```rust
-/// # use explicit_error::{prelude::*, Error, HttpError, Bug};
+/// # use explicit_error_http::{prelude::*, Error, HttpError, Bug};
 /// # use problem_details::ProblemDetails;
 /// # use actix_web::http::StatusCode;
-/// use explicit_error::Result;
+/// use explicit_error_http::Result;
 ///
 /// fn fetch() -> Result<()> {
 ///     let sqlx_error = sqlx::Error::RowNotFound;
@@ -46,7 +46,7 @@ use std::{backtrace::Backtrace, error::Error as StdError};
 /// }
 ///
 /// # #[derive(HttpErrorDerive, Debug)]
-/// # #[explicit_error(StdError)]
+/// # #[explicit_error_http(StdError)]
 /// # enum MyEntitysError {
 /// #    NotFound,
 /// # }
@@ -69,10 +69,10 @@ use std::{backtrace::Backtrace, error::Error as StdError};
 /// ```
 ///
 /// You can also generate a [Bug] from a [Result] or an [Option].
-/// The prelude must be imported first with `use explicit_error::prelude::*`.
+/// The prelude must be imported first with `use explicit_error_http::prelude::*`.
 /// ```rust
 /// # use std::fs::File;
-/// use explicit_error::{Error, prelude::*};
+/// use explicit_error_http::{Error, prelude::*};
 ///
 /// fn foo() -> Result<(), Error> {
 ///     let option: Option<u8> = None;
@@ -131,7 +131,7 @@ impl Bug {
     ///
     /// # Examples
     /// ```rust
-    /// # use explicit_error::{Result, Bug};
+    /// # use explicit_error_http::{Result, Bug};
     /// # fn doc() -> Result<()> {
     /// if 1 < 2 {
     ///     Err(Bug::new())?;
@@ -152,10 +152,10 @@ impl Bug {
     /// On a [Result](std::result::Result) use [map_err_or_bug](crate::ResultBug::map_err_or_bug) to be more concise.
     /// # Examples
     /// ```rust
-    /// # use explicit_error::{prelude::*, Error, HttpError, Bug};
+    /// # use explicit_error_http::{prelude::*, Error, HttpError, Bug};
     /// # use problem_details::ProblemDetails;
     /// # use actix_web::http::StatusCode;
-    /// use explicit_error::Result;
+    /// use explicit_error_http::Result;
     ///
     /// fn fetch() -> Result<()> {
     ///     let sqlx_error = sqlx::Error::RowNotFound;
@@ -166,7 +166,7 @@ impl Bug {
     /// }
     ///
     /// # #[derive(HttpErrorDerive, Debug)]
-    /// # #[explicit_error(StdError)]
+    /// # #[explicit_error_http(StdError)]
     /// # enum MyEntitysError {
     /// #    NotFound,
     /// # }
@@ -199,7 +199,7 @@ impl Bug {
     /// but not in the http response.
     /// # Examples
     /// ```rust
-    /// # use explicit_error::{Result, Bug};
+    /// # use explicit_error_http::{Result, Bug};
     /// # fn doc() -> Result<()> {
     /// if 1 < 2 {
     ///     Err(Bug::new().with_context("Some info to help debug"))?;
@@ -219,7 +219,7 @@ impl Bug {
     ///
     /// # Examples
     /// ```rust
-    /// # use explicit_error::{Result, Bug};
+    /// # use explicit_error_http::{Result, Bug};
     /// # fn doc() -> Result<()> {
     /// if 1 < 2 {
     ///     Err(Bug::new_force())?;

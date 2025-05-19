@@ -8,9 +8,9 @@
 //! - Add context to errors to help debugging.
 //! - Monitor errors before they are transformed into proper HTTP responses. The implementation is different depending on the web framework used, to have more details refer to the `Web frameworks` section.
 //!
-//! # A tour of explicit_error
+//! # A tour of explicit_error_http
 //!
-//! The cornerstone of the library is the [Error] type. Use `Result<T, explicit_error::Error>`, or equivalently `explicit_error::Result<T>`, as the return type of any faillible function returning errors that convert to HTTP response.
+//! The cornerstone of the library is the [Error] type. Use `Result<T, explicit_error_http::Error>`, or equivalently `explicit_error_http::Result<T>`, as the return type of any faillible function returning errors that convert to HTTP response.
 //! Usually, it is mostly functions either called by handlers or middlewares.
 //!
 //! ## Inline
@@ -21,7 +21,7 @@
 //! use actix_web::http::StatusCode;
 //! use problem_details::ProblemDetails;
 //! use http::Uri;
-//! use explicit_error::{prelude::*, HttpError, Result, Bug};
+//! use explicit_error_http::{prelude::*, HttpError, Result, Bug};
 //! // Import the prelude to enable functions on std::result::Result
 //!
 //! fn business_logic() -> Result<()> {
@@ -59,7 +59,7 @@
 //! use actix_web::http::StatusCode;
 //! use problem_details::ProblemDetails;
 //! use http::Uri;
-//! use explicit_error::{prelude::*, Result};
+//! use explicit_error_http::{prelude::*, Result};
 //!
 //! #[derive(HttpErrorDerive, Debug)]
 //! enum MyError {
@@ -91,14 +91,14 @@
 //! # Pattern matching
 //!
 //! One of the drawbacks of using one and only one return type for different domain functions is that callers loose the ability to pattern match on the returned error.
-//! A solution is provided using [try_map_on_source](ResultHttpError::try_map_on_source) on any `Result<T, Error>`, or equivalently `explicit_error::Result<T>`.
+//! A solution is provided using [try_map_on_source](ResultHttpError::try_map_on_source) on any `Result<T, Error>`, or equivalently `explicit_error_http::Result<T>`.
 //!
 //!
 //! ```rust
 //! # use actix_web::http::StatusCode;
 //! # use http::Uri;
 //! # use problem_details::ProblemDetails;
-//! # use explicit_error::{prelude::*, HttpError, Result};
+//! # use explicit_error_http::{prelude::*, HttpError, Result};
 //! #[derive(HttpErrorDerive, Debug)]
 //! enum MyError {
 //!     Foo,
@@ -145,7 +145,7 @@
 //!
 //! ## Web frameworks
 //!
-//! explicit_error integrates well with most popular web frameworks by providing a feature flag for each of them.
+//! explicit_error_http integrates well with most popular web frameworks by providing a feature flag for each of them.
 //!
 //! ### Actix web
 //!
@@ -164,8 +164,8 @@ pub use handler::*;
 pub use http::*;
 
 #[cfg(feature = "actix-web")]
-pub use explicit_error_derive::HandlerErrorDerive;
-pub use explicit_error_derive::HttpErrorDerive;
+pub use explicit_error_http_derive::HandlerErrorDerive;
+pub use explicit_error_http_derive::HttpErrorDerive;
 
 fn unwrap_failed(msg: &str, error: &dyn std::fmt::Debug) -> ! {
     panic!("{msg}: {error:?}")
@@ -178,5 +178,5 @@ pub mod prelude {
         HandlerError, OptionBug, ResultBug, ResultBugWithContext, ResultHttpError, ToDomainError,
         http::HttpError,
     };
-    pub use explicit_error_derive::HttpErrorDerive;
+    pub use explicit_error_http_derive::HttpErrorDerive;
 }
