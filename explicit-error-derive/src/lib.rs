@@ -11,6 +11,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{DeriveInput, parse_macro_input};
 
+#[cfg(feature = "http")]
 #[proc_macro_derive(HttpError)]
 pub fn derive_http_error(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -30,6 +31,7 @@ pub fn derive_actix_handler_error(input: TokenStream) -> TokenStream {
         .into()
 }
 
+#[cfg(feature = "http")]
 #[proc_macro_derive(JSONDisplay)]
 pub fn json_display(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);

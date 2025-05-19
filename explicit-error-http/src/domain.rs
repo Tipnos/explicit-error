@@ -1,6 +1,6 @@
 use crate::error::HttpError;
 use explicit_error::{Domain, Error};
-use explicit_error_http_derive::JSONDisplay;
+use explicit_error_derive::JSONDisplay;
 use serde::{Serialize, Serializer};
 use std::{error::Error as StdError, fmt::Debug};
 
@@ -50,7 +50,6 @@ use std::{error::Error as StdError, fmt::Debug};
 /// use explicit_error_http::{Error, prelude::*, derive::HttpError};
 ///
 /// #[derive(HttpError, Debug)]
-/// # #[explicit_error_http(StdError)]
 ///  enum NotFoundError {
 ///     Bar(String)
 ///  }

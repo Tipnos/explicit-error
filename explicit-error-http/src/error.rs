@@ -1,6 +1,6 @@
 use erased_serde::Serialize as DynSerialize;
 use explicit_error::Error;
-use explicit_error_http_derive::JSONDisplay;
+use explicit_error_derive::JSONDisplay;
 use serde::Serialize;
 
 use crate::DomainError;

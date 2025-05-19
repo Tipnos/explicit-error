@@ -219,11 +219,10 @@ pub type Result<T> = std::result::Result<T, explicit_error::Error<DomainError>>;
 pub mod prelude {
     pub use crate::{HandlerError, ToDomainError, error::HttpError};
     pub use explicit_error::prelude::*;
-    pub use explicit_error_http_derive::HttpError;
+    pub use explicit_error_derive::HttpError;
 }
 
 pub mod derive {
-    #[cfg(feature = "actix-web")]
-    pub use explicit_error_http_derive::HandlerError;
-    pub use explicit_error_http_derive::HttpError;
+    pub use explicit_error_derive::HandlerError;
+    pub use explicit_error_derive::HttpError;
 }

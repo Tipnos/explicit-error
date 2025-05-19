@@ -1,13 +1,14 @@
 [package]
 edition = "2024"
-name = "explicit-error-http-derive"
+name = "explicit-error-derive"
 version = "0.1.0"
 
 [lib]
 proc-macro = true
 
 [features]
-actix-web = []
+actix-web = ["http"]
+http = []
 
 [dependencies]
 proc-macro2 = "1.0.94"
