@@ -4,7 +4,7 @@ mod domain;
 use crate::unwrap_failed;
 pub use bug::*;
 pub use domain::*;
-use std::error::Error as StdError;
+use std::{error::Error as StdError, fmt::Display};
 
 /// # Examples
 /// [Error::Domain] can be generated from result
@@ -77,7 +77,7 @@ impl StdError for Error {
     }
 }
 
-impl std::fmt::Display for Error {
+impl Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Error::Domain(explicit_error) => explicit_error.fmt(f),
@@ -338,7 +338,7 @@ pub trait ResultHttpError<T> {
     /// use explicit_error::{prelude::*, Bug};
     /// Err::<(), _>(Bug::new()).with_context("Foo bar");
     /// ```
-    fn with_context<D: std::fmt::Display>(self, context: D) -> Result<T, Error>;
+    fn with_context(self, context: impl Display) -> Result<T, Error>;
 }
 
 impl<T> ResultHttpError<T> for Result<T, Error> {
@@ -374,7 +374,7 @@ impl<T> ResultHttpError<T> for Result<T, Error> {
         }
     }
 
-    fn with_context<D: std::fmt::Display>(self, context: D) -> Result<T, Error> {
+    fn with_context(self, context: impl Display) -> Result<T, Error> {
         match self {
             Ok(ok) => Ok(ok),
             Err(error) => Err(match error {
@@ -438,11 +438,11 @@ pub trait ResultBugWithContext<T> {
     /// use explicit_error::{prelude::*, Bug};
     /// Err::<(), _>(Bug::new()).with_context("Foo bar");
     /// ```
-    fn with_context<D: std::fmt::Display>(self, context: D) -> Result<T, Bug>;
+    fn with_context(self, context: impl Display) -> Result<T, Bug>;
 }
 
 impl<T> ResultBugWithContext<T> for Result<T, Bug> {
-    fn with_context<D: std::fmt::Display>(self, context: D) -> Result<T, Bug> {
+    fn with_context(self, context: impl Display) -> Result<T, Bug> {
         match self {
             Ok(ok) => Ok(ok),
             Err(b) => Err(b.with_context(context)),

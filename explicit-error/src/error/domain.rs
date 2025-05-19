@@ -84,7 +84,7 @@ impl DomainError {
         (self.output, self.source)
     }
 
-    pub fn with_context<D: std::fmt::Display>(self, context: D) -> Self {
+    pub fn with_context(self, context: impl std::fmt::Display) -> Self {
         Self {
             output: self.output.with_context(context),
             source: self.source,

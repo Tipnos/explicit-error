@@ -207,7 +207,7 @@ impl Bug {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn with_context<D: std::fmt::Display>(self, context: D) -> Self {
+    pub fn with_context(self, context: impl std::fmt::Display) -> Self {
         Self {
             source: self.source,
             backtrace: self.backtrace,
