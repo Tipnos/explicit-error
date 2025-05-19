@@ -107,11 +107,9 @@ impl Domain for DomainError {
         self.source
     }
 
-    fn with_context(self, context: impl std::fmt::Display) -> Self {
-        Self {
-            output: self.output.with_context(context),
-            source: self.source,
-        }
+    fn with_context(mut self, context: impl std::fmt::Display) -> Self {
+        self.output = self.output.with_context(context);
+        self
     }
 }
 

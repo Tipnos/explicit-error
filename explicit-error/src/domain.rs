@@ -1,6 +1,6 @@
 pub trait Domain
 where
-    Self: std::error::Error + 'static + std::fmt::Debug + Into<crate::Error<Self>>,
+    Self: std::error::Error + 'static + std::fmt::Debug + Into<crate::error::Error<Self>>,
 {
     fn with_context(self, context: impl std::fmt::Display) -> Self;
 

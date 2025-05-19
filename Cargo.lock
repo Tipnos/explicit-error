@@ -656,6 +656,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "explicit-error-bin"
+version = "0.1.0"
+dependencies = [
+ "explicit-error",
+]
+
+[[package]]
 name = "explicit-error-http"
 version = "0.1.0"
 dependencies = [

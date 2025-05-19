@@ -1,5 +1,4 @@
-use crate::Domain;
-use crate::Error;
+use crate::{domain::Domain, error::Error};
 use serde::{Serialize, Serializer};
 use std::{backtrace::Backtrace, error::Error as StdError};
 
@@ -42,7 +41,11 @@ impl std::fmt::Display for Bug {
                 None => String::new(),
             },
             match &self.source {
-                Some(s) => format!("Source: {}, {}\n", crate::errors_chain_debug(s.as_ref()), s),
+                Some(s) => format!(
+                    "Source: {}, {}\n",
+                    crate::error::errors_chain_debug(s.as_ref()),
+                    s
+                ),
                 None => String::new(),
             },
         )
@@ -172,7 +175,7 @@ where
     s.serialize_str(
         &source
             .as_ref()
-            .map(|s| format!("{}: {}", crate::errors_chain_debug(s.as_ref()), s))
+            .map(|s| format!("{}: {}", crate::error::errors_chain_debug(s.as_ref()), s))
             .unwrap_or_default(),
     )
 }

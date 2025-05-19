@@ -145,13 +145,9 @@ impl HttpError {
     ///     )
     /// }
     /// ```
-    pub fn with_context(self, context: impl std::fmt::Display) -> Self {
-        Self {
-            #[cfg(feature = "actix-web")]
-            http_status_code: self.http_status_code,
-            public: self.public,
-            context: Some(context.to_string()),
-        }
+    pub fn with_context(mut self, context: impl std::fmt::Display) -> Self {
+        self.context = Some(context.to_string());
+        self
     }
 }
 
