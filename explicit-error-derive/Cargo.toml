@@ -8,6 +8,7 @@ proc-macro = true
 
 [features]
 actix-web = ["http"]
+exit = []
 http = []
 
 [dependencies]

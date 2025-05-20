@@ -1,22 +1,20 @@
+use crate::Error;
 use erased_serde::Serialize as DynSerialize;
-use explicit_error::Error;
 use explicit_error_derive::JSONDisplay;
 use serde::Serialize;
-
-use crate::DomainError;
 
 /// Self-sufficient container to both log an error and generate its HTTP response. Regarding the web framework you use, its shape can be different.
 ///
 /// [Error](crate::Error) implements `From<HttpError>`, use `?` and `.into()` in functions and closures to convert to the [Error::Domain] variant.
 ///
-/// Note: [HttpError] convert to [Error](crate::Error) by converting first to [DomainError].
+/// Note: [HttpError] convert to [Error](crate::Error) by converting first to [DomainError](crate::DomainError).
 /// # Examples
-/// Domain errors that derive [HttpError](crate::derive::HttpError) must implement `From<MyDomainError> for HttpError`.
+/// Domain errors that derive [HttpError](crate::derive::HttpError) must implement `From<&MyDomainError> for HttpError`.
 /// ```rust
 /// # use actix_web::http::StatusCode;
 /// # use problem_details::ProblemDetails;
 /// # use http::Uri;
-/// use explicit_error_http::{derive::HttpError, prelude::*};
+/// use explicit_error_http::{derive::HttpError, prelude::*, HttpError};
 ///
 /// #[derive(HttpError, Debug)]
 /// enum MyDomainError {
@@ -43,7 +41,7 @@ use crate::DomainError;
 /// # use actix_web::http::StatusCode;
 /// # use problem_details::ProblemDetails;
 /// # use http::Uri;
-/// use explicit_error_http::{Error, prelude::*};
+/// use explicit_error_http::{Error, prelude::*, HttpError};
 ///
 /// fn business_logic() -> Result<(), Error> {
 ///     Err(HttpError::new(
@@ -151,7 +149,7 @@ impl HttpError {
     }
 }
 
-impl From<HttpError> for Error<DomainError> {
+impl From<HttpError> for Error {
     fn from(value: HttpError) -> Self {
         Error::Domain(Box::new(super::DomainError {
             output: value,

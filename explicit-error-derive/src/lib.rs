@@ -5,9 +5,10 @@ extern crate syn;
 
 #[cfg(feature = "actix-web")]
 mod actix;
-mod error;
+mod domain;
 
 use proc_macro::TokenStream;
+#[cfg(feature = "http")]
 use quote::quote;
 use syn::{DeriveInput, parse_macro_input};
 
@@ -16,7 +17,17 @@ use syn::{DeriveInput, parse_macro_input};
 pub fn derive_http_error(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
-    error::derive(input)
+    domain::derive(input, "explicit_error_http")
+        .unwrap_or_else(syn::Error::into_compile_error)
+        .into()
+}
+
+#[cfg(feature = "exit")]
+#[proc_macro_derive(ExitError)]
+pub fn derive_bin_error(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+
+    domain::derive(input, "explicit_error_exit")
         .unwrap_or_else(syn::Error::into_compile_error)
         .into()
 }

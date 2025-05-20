@@ -3,7 +3,7 @@
 //!
 //! The key features are:
 //! - Explicitly mark any error wrapped in a [Result] as a [Bug]. A backtrace is captured and a 500 Internal Server HTTP response generated.
-//! - A derive macro to easily declare how enum or struct errors transform into an [Error], i.e. defines the generated HTTP response.
+//! - A derive macro [HttpError](derive::HttpError) to easily declare how enum or struct errors transform into an [Error], i.e. defines the generated HTTP response.
 //! - Inline transformation of any errors wrapped in a [Result] into an [Error].
 //! - Add context to errors to help debugging.
 //! - Monitor errors before they are transformed into proper HTTP responses. The implementation is different depending on the web framework used, to have more details refer to the `Web frameworks` section.
@@ -53,13 +53,13 @@
 //! ## Enum and struct
 //!
 //! Domain errors are often represented as enum or struct as they are raised in different places.
-//! To easily enable the conversion to [Error] use the [HttpError](derive::HttpError) derive and implement `From<YourError> for HttpError`.
+//! To easily enable the conversion to [Error] use the [HttpError](derive::HttpError) derive and implement `From<&MyError> for HttpError`.
 //!
 //! ```rust
 //! use actix_web::http::StatusCode;
 //! use problem_details::ProblemDetails;
 //! use http::Uri;
-//! use explicit_error_http::{prelude::*, Result, derive::HttpError};
+//! use explicit_error_http::{prelude::*, Result, derive::HttpError, HttpError};
 //!
 //! #[derive(HttpError, Debug)]
 //! enum MyError {
@@ -150,7 +150,7 @@
 //!
 //! The type [Error] cannot directly be used as handlers or middlewares returned [Err] variant. A dedicated type is required.
 //! The easiest implementation is to declare a [Newtype](https://doc.rust-lang.org/rust-by-example/generics/new_types.html),
-//! derive it with the [HandlerErrorDerive] and implement the [HandlerError] trait.
+//! derive it with the [HandlerError] and implement the [HandlerError] trait.
 //!
 //! ```rust
 //! # use actix_web::{App, HttpResponse, HttpServer, get};
@@ -210,16 +210,15 @@ pub use domain::*;
 pub use error::*;
 pub use handler::*;
 
-#[doc(hidden)]
+/// Re-import from [explicit_error] crate.
 pub use explicit_error::Bug;
 
 pub type Error = explicit_error::Error<DomainError>;
 pub type Result<T> = std::result::Result<T, explicit_error::Error<DomainError>>;
 
 pub mod prelude {
-    pub use crate::{HandlerError, ToDomainError, error::HttpError};
+    // pub use crate::ResultDomainWithContext;
     pub use explicit_error::prelude::*;
-    pub use explicit_error_derive::HttpError;
 }
 
 pub mod derive {

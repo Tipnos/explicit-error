@@ -4,7 +4,7 @@ use serde::Serialize;
 
 /// The type [Error] cannot directly be used as handlers or middlewares returned [Err] variant. A dedicated type is required.
 /// The easiest implementation is to declare a [Newtype](https://doc.rust-lang.org/rust-by-example/generics/new_types.html),
-/// derive it with the [HandlerErrorDerive](crate::HandlerErrorDerive) and implement the [HandlerError] trait.
+/// derive it with the [HandlerError](crate::derive::HandlerError) and implement the [HandlerError] trait.
 ///
 /// ```rust
 /// # use actix_web::{App, HttpResponse, HttpServer, get};
@@ -54,7 +54,7 @@ use serde::Serialize;
 /// }
 /// ```
 pub trait HandlerError {
-    /// Accessor required by [HandlerErrorDerive](crate::HandlerErrorDerive)
+    /// Accessor required by [HandlerError](crate::derive::HandlerError)
     fn http_error(&self) -> &Error;
 
     /// Set-up monitoring and your custom HTTP response body for bugs

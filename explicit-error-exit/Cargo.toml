@@ -1,0 +1,8 @@
+[package]
+edition = "2024"
+name = "explicit-error-exit"
+version = "0.1.0"
+
+[dependencies]
+explicit-error = {path = "../explicit-error"}
+explicit-error-derive = {path = "../explicit-error-derive", features = ["exit"]}

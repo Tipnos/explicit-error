@@ -4,7 +4,7 @@ use explicit_error_derive::JSONDisplay;
 use serde::{Serialize, Serializer};
 use std::{error::Error as StdError, fmt::Debug};
 
-/// Wrapper for errors of your domain that return informative feedback to the users. It is used as the [explicit_error::Error::Domain] variant generic type.
+/// Wrapper for errors that are not a [Bug](explicit_error::Bug). It is used as the [explicit_error::Error::Domain] variant generic type.
 ///
 /// It is highly recommended to implement the derive [HttpError](crate::derive::HttpError) which generates the boilerplate
 /// for your domain errors. Otherwise you can implement the [ToDomainError] trait.
@@ -47,7 +47,7 @@ use std::{error::Error as StdError, fmt::Debug};
 /// # use actix_web::http::StatusCode;
 /// # use problem_details::ProblemDetails;
 /// # use http::Uri;
-/// use explicit_error_http::{Error, prelude::*, derive::HttpError};
+/// use explicit_error_http::{Error, prelude::*, derive::HttpError, HttpError};
 ///
 /// #[derive(HttpError, Debug)]
 ///  enum NotFoundError {
@@ -154,6 +154,34 @@ where
                 source: self,
             })
         )
+    }
+}
+
+/// To use this trait on [Result] import the prelude `use explicit_error_http::prelude::*`
+pub trait ResultDomainWithContext<T, D>
+where
+    D: ToDomainError,
+    for<'a> &'a D: Into<HttpError>,
+{
+    /// Add a context to an error that convert to [Error] wrapped in a [Result::Err]
+    /// # Examples
+    /// ```rust
+    /// use explicit_error::{prelude::*, Bug};
+    /// Err::<(), _>(Bug::new()).with_context("Foo bar");
+    /// ```
+    fn with_context(self, context: impl std::fmt::Display) -> std::result::Result<T, DomainError>;
+}
+
+impl<T, D> ResultDomainWithContext<T, D> for Result<T, D>
+where
+    D: ToDomainError,
+    for<'a> &'a D: Into<HttpError>,
+{
+    fn with_context(self, context: impl std::fmt::Display) -> std::result::Result<T, DomainError> {
+        match self {
+            Ok(ok) => Ok(ok),
+            Err(e) => Err(e.to_domain_error().with_context(context)),
+        }
     }
 }
 
