@@ -1,4 +1,4 @@
-//! This crate provides idiomatic tools to manage errors that ends a process/program.
+//! Built on top of [`explicit-error`](https://crates.io/crates/explicit-error), it provides idiomatic tools to manage errors that ends a process/program.
 //! Based on the [explicit-error](explicit_error) crate, its chore tenet is to favor explicitness by inlining the error output while remaining concise.
 //!
 //! The key features are:
