@@ -30,10 +30,11 @@ use explicit_error_http::{prelude::*, HttpError, Result, Bug};
 // Import the prelude to enable functions on std::result::Result
 
 fn business_logic() -> Result<()> {
-    Err("error message").bug()?;
-
     Err(std::io::Error::new(std::io::ErrorKind::Other, "oh no!"))
-        .bug_with_source()?; // Same behavior as bug() but capture the wrapped std::error::Error as a source
+        .bug()?;
+
+    // Same behavior as bug() but the error is not captured as a source because it does not implement `[std::error::Error]`
+    Err("error message").bug_no_source()?;
 
     if 1 > 2 {
         Err(Bug::new()

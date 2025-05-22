@@ -7,9 +7,9 @@ use std::{backtrace::Backtrace, error::Error as StdError};
 ///
 /// To generate it from predicates use [Bug::new], from [Result] or [Option]
 /// import the prelude and use either [bug()](crate::error::ResultBug::bug),
-/// [bug_with_source()](crate::error::ResultBug::bug_with_source),
+/// [bug_no_source()](crate::error::ResultBug::bug_no_source),
 /// [bug_force()](crate::error::ResultBug::bug_force),
-/// [bug_force_with_source()](crate::error::ResultBug::bug_force_with_source)
+/// [bug_no_source_force()](crate::error::ResultBug::bug_no_source_force)
 #[derive(Debug, Serialize)]
 pub struct Bug {
     #[serde(serialize_with = "serialize_source")]

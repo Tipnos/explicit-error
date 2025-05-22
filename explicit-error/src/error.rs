@@ -133,26 +133,38 @@ pub trait ResultBug<T, S> {
         D: Domain;
 
     /// Convert any [Result::Err] into a [Result::Err] wrapping a [Bug]
+    /// Use [bug](ResultBug::bug) instead if the error implements [std::error::Error]
     ///  ```rust
     /// # use std::fs::File;
     /// # use explicit_error_exit::{Error, prelude::*};
     /// fn foo() -> Result<(), Error> {
     ///     let file: Result<File, std::io::Error> = File::open("foo.conf");
-    ///     file.bug().with_context("Configuration file foo.conf is missing.")?;
+    ///     file.bug_no_source().with_context("Configuration file foo.conf is missing.")?;
     ///
-    ///     Err("error message").bug()?;
+    ///     Err("error message").bug_no_source()?;
     ///     # Ok(())
     /// }
     /// ```
-    fn bug(self) -> Result<T, Bug>;
+    fn bug_no_source(self) -> Result<T, Bug>;
 
-    /// Same behavior as `bug` but capture the original error as a source.
-    /// Only applicable to wrapped [std::errror::Error](std::error::Error)
-    fn bug_with_source(self) -> Result<T, Bug>
+    /// Convert any [Result::Err] wrapping an error that implements
+    /// [std::error::Error] into a [Result::Err] wrapping a [Bug]
+    ///  ```rust
+    /// # use std::fs::File;
+    /// # use explicit_error_exit::{Error, prelude::*};
+    /// fn foo() -> Result<(), Error> {
+    ///     Err(sqlx::Error::RowNotFound)
+    ///         .bug()
+    ///         .with_context("Configuration file foo.conf is missing.")?;
+    ///     # Ok(())
+    /// }
+    /// ```
+    fn bug(self) -> Result<T, Bug>
     where
         S: StdError + 'static;
 
     /// Convert any [Result::Err] into a [Result::Err] wrapping a [Bug] forcing backtrace capture
+    /// Use [bug_force](ResultBug::bug_force) instead if the error implements [std::error::Error]
     ///  ```rust
     /// # use std::fs::File;
     /// # use explicit_error_exit::{Error, prelude::*};
@@ -162,11 +174,21 @@ pub trait ResultBug<T, S> {
     ///     # Ok(())
     /// }
     /// ```
-    fn bug_force(self) -> Result<T, Bug>;
+    fn bug_no_source_force(self) -> Result<T, Bug>;
 
-    /// Same behavior as `bug_force` but capture the original error as a source.
-    /// Only applicable to wrapped [std::errror::Error](std::error::Error)
-    fn bug_force_with_source(self) -> Result<T, Bug>
+    /// Convert any [Result::Err] wrapping an error that implements
+    /// [std::error::Error] into a [Result::Err] wrapping a [Bug] forcing backtrace capture
+    ///  ```rust
+    /// # use std::fs::File;
+    /// # use explicit_error_exit::{Error, prelude::*};
+    /// fn foo() -> Result<(), Error> {
+    ///     Err(sqlx::Error::RowNotFound)
+    ///         .bug_force()
+    ///         .with_context("Configuration file foo.conf is missing.")?;
+    ///     # Ok(())
+    /// }
+    /// ```
+    fn bug_force(self) -> Result<T, Bug>
     where
         S: StdError + 'static;
 }
@@ -188,21 +210,21 @@ impl<T, S> ResultBug<T, S> for Result<T, S> {
         }
     }
 
-    fn bug(self) -> Result<T, Bug> {
+    fn bug_no_source(self) -> Result<T, Bug> {
         match self {
             Ok(ok) => Ok(ok),
             Err(_) => Err(Bug::new()),
         }
     }
 
-    fn bug_force(self) -> Result<T, Bug> {
+    fn bug_no_source_force(self) -> Result<T, Bug> {
         match self {
             Ok(ok) => Ok(ok),
             Err(_) => Err(Bug::new_force()),
         }
     }
 
-    fn bug_with_source(self) -> Result<T, Bug>
+    fn bug(self) -> Result<T, Bug>
     where
         S: StdError + 'static,
     {
@@ -212,7 +234,7 @@ impl<T, S> ResultBug<T, S> for Result<T, S> {
         }
     }
 
-    fn bug_force_with_source(self) -> Result<T, Bug>
+    fn bug_force(self) -> Result<T, Bug>
     where
         S: StdError + 'static,
     {

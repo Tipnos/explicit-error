@@ -8,7 +8,7 @@ keywords = ["error", "error-handling"]
 license = "Apache-2.0"
 name = "explicit-error-http"
 repository = "https://github.com/Tipnos/explicit-error"
-version = "0.1.1"
+version = "0.1.2"
 
 [features]
 actix-web = ["dep:actix-web", "explicit-error-derive/actix-web"]

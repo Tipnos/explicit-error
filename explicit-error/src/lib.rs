@@ -23,7 +23,7 @@
 //!
 //! fn business_logic() -> Result<()> {
 //!     let one = Ok::<_, MyError>(())
-//!         .bug_with_source() // save the initial error as the std:error::Error source of the Bug type
+//!         .bug()
 //!         .with_context("Usefull context to help debug.")?;
 //!
 //!     let two = Some(2).bug()?;
@@ -118,8 +118,8 @@
 //!
 //! fn business_logic() -> Result<()> {
 //!     // Error from a library that should not happen
-//!     Err(std::io::Error::new(std::io::ErrorKind::Other, "oh no!"))
-//!         .bug_with_source()?; // Same behavior as bug() but capture the wrapped std::error::Error as a source
+//!     Err(sqlx::Error::RowNotFound)
+//!         .bug()?;
 //!
 //!     // Application error
 //!     if 1 > 2 {
