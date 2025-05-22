@@ -1,10 +1,6 @@
 Explicit error
 ==============
 
-[<img alt="crates.io" src="https://img.shields.io/crates/v/explicit-error.svg?style=for-the-badge&color=fc8d62&logo=rust" height="20">](https://crates.io/crates/explicit-error)
-[<img alt="docs.rs" src="https://img.shields.io/badge/docs.rs-explicit-error-66c2a5?style=for-the-badge&labelColor=555555&logo=docs.rs" height="20">](https://docs.rs/explicit-error)
-[<img alt="build status" src="https://img.shields.io/github/actions/workflow/status/Tipnos/explicit-error/ci.yml?branch=main&style=for-the-badge" height="20">](https://github.com/Tipnos/explicit-error/actions?query=branch%3Amain)
-
 <!-- cargo-rdme start -->
 
 Provide tools to have an explicit and concise error syntax for binary crates.
