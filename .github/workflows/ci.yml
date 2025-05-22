@@ -36,6 +36,8 @@ jobs:
       run: |
         cargo test --verbose
         cargo build --example actix
+    - name: Doc
+      run: cargo doc
     - name: Publish dry run
       run: |
         cargo publish -p explicit-error --dry-run
