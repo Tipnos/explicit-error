@@ -1,0 +1,35 @@
+[package]
+authors = ["Tristan Germain <ge.tristan@gmail.com>"]
+categories = ["rust-patterns"]
+description = "Explicit concrete Error type to manage and monitor errors that generate an HTTP response. It has dedicated feature flag to integrate well with most populars web frameworks."
+documentation = "https://docs.rs/explicit-error-http"
+edition = "2024"
+keywords = ["error", "error-handling"]
+license = "Apache-2.0"
+name = "explicit-error-http"
+repository = "https://github.com/Tipnos/explicit-error"
+version = "0.1.0"
+
+[features]
+actix-web = ["dep:actix-web", "explicit-error-derive/actix-web"]
+default = ["actix-web"]
+
+[dependencies]
+actix-web = {version = "4.10.2", default-features = false, optional = true}
+erased-serde = "0.4.6"
+explicit-error = {version = "0", path = "../explicit-error"}
+explicit-error-derive = {version = "0", path = "../explicit-error-derive"}
+http = "1.3.1"
+problem_details = "0.8.0"
+serde = "1.0.219"
+serde_json = "1.0.140"
+
+[dev-dependencies]
+actix-web = "4.10.2"
+env_logger = "0.11.8"
+log = "0.4.27"
+sqlx = "0.8.3"
+
+[[example]]
+name = "actix"
+required-features = ["actix-web"]

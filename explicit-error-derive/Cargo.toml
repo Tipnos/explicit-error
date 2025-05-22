@@ -1,0 +1,24 @@
+[package]
+authors = ["Tristan Germain <ge.tristan@gmail.com>"]
+categories = ["rust-patterns"]
+description = "Derives for crates built on top of explicit-error"
+documentation = "https://docs.rs/explicit-error-derive"
+edition = "2024"
+keywords = ["error", "error-handling"]
+license = "Apache-2.0"
+name = "explicit-error-derive"
+repository = "https://github.com/Tipnos/explicit-error"
+version = "0.1.0"
+
+[lib]
+proc-macro = true
+
+[features]
+actix-web = ["http"]
+exit = []
+http = []
+
+[dependencies]
+proc-macro2 = "1.0.94"
+quote = "1.0.40"
+syn = "2.0.100"

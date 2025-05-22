@@ -1,0 +1,3 @@
+[workspace]
+members = ["explicit-error", "explicit-error-http", "explicit-error-derive", "explicit-error-exit"]
+resolver = "2"
