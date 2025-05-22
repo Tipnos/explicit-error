@@ -8,7 +8,7 @@ keywords = ["error", "error-handling"]
 license = "Apache-2.0"
 name = "explicit-error"
 repository = "https://github.com/Tipnos/explicit-error"
-version = "0.1.2"
+version = "0.1.3"
 
 [dependencies]
 serde = {version = "1.0.219", features = ["derive"]}
