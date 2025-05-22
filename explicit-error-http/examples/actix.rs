@@ -138,7 +138,7 @@ mod service {
 
     pub fn fetch_entity() -> Result<()> {
         db::timed_out()
-            .bug_with_source()
+            .bug()
             .with_context("Usefull info to help debug")?;
 
         Ok(())
