@@ -1,6 +1,13 @@
 [package]
+authors = ["Tristan Germain <ge.tristan@gmail.com>"]
+categories = ["rust-patterns"]
+description = "Explicit concrete Error type for binary crates"
+documentation = "https://docs.rs/explicit-error"
 edition = "2024"
+keywords = ["error", "error-handling"]
+license = "Apache-2.0"
 name = "explicit-error"
+repository = "https://github.com/Tipnos/explicit-error"
 version = "0.1.0"
 
 [dependencies]

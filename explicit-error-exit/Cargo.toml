@@ -1,8 +1,15 @@
 [package]
+authors = ["Tristan Germain <ge.tristan@gmail.com>"]
+categories = ["rust-patterns"]
+description = "Explicit concrete Error type to manage errors that end a process/program"
+documentation = "https://docs.rs/explicit-error-exit"
 edition = "2024"
+keywords = ["error", "error-handling"]
+license = "Apache-2.0"
 name = "explicit-error-exit"
+repository = "https://github.com/Tipnos/explicit-error"
 version = "0.1.0"
 
 [dependencies]
-explicit-error = {path = "../explicit-error"}
-explicit-error-derive = {path = "../explicit-error-derive", features = ["exit"]}
+explicit-error = {version = "0", path = "../explicit-error"}
+explicit-error-derive = {version = "0", path = "../explicit-error-derive", features = ["exit"]}

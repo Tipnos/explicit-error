@@ -5,11 +5,14 @@ extern crate syn;
 
 #[cfg(feature = "actix-web")]
 mod actix;
+#[cfg(any(feature = "exit", feature = "actix-web"))]
 mod domain;
 
+#[cfg(any(feature = "http", feature = "exit", feature = "actix-web"))]
 use proc_macro::TokenStream;
 #[cfg(feature = "http")]
 use quote::quote;
+#[cfg(any(feature = "http", feature = "exit", feature = "actix-web"))]
 use syn::{DeriveInput, parse_macro_input};
 
 #[cfg(feature = "http")]
