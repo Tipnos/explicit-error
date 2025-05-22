@@ -3,6 +3,11 @@ use crate::domain::Domain;
 use crate::unwrap_failed;
 use std::{error::Error as StdError, fmt::Display};
 
+/// Use `Result<T, explicit_error::Error>` as the return type of any binary crate
+/// faillible function returning errors.
+/// The [Error::Bug] variant is for errors that should not happen but cannot panic.
+/// The [Error::Domain] variant is for domain errors that provide feedbacks to the user.
+/// For library or functions that require the caller to pattern match on the returned error, a dedicated type is prefered.
 #[derive(Debug)]
 pub enum Error<D: Domain> {
     Domain(Box<D>), // Box for size: https://doc.rust-lang.org/clippy/lint_configuration.html#large-error-threshold
@@ -77,7 +82,7 @@ pub fn errors_chain_debug(source: &dyn StdError) -> String {
 /// To use this trait on [Result] import the prelude `use explicit_error::prelude::*`
 pub trait ResultBug<T, S> {
     /// Convert with a closure any error wrapped in a [Result] to an [Error]. Returning an [Ok] convert the wrapped type to
-    /// an [Error] usually it is either a [DomainError] or [HttpError] ending as [Error::Domain].
+    /// [Error::Domain].
     /// Returning an [Err] generates a [Bug] with the orginal error has its source.
     /// # Examples
     /// Pattern match to convert to an [Error::Domain]
@@ -85,7 +90,7 @@ pub trait ResultBug<T, S> {
     /// # use actix_web::http::StatusCode;
     /// # use problem_details::ProblemDetails;
     /// # use http::Uri;
-    /// use explicit_error::{Error, prelude::*};
+    /// # use explicit_error_http::{Error, prelude::*, HttpError, derive::HttpError};
     /// fn authz_middleware(public_identifier: &str) -> Result<(), Error> {
     ///     let entity = fetch_bar(&public_identifier).map_err_or_bug(|e|
     ///         match e {
@@ -98,57 +103,12 @@ pub trait ResultBug<T, S> {
     ///
     ///     Ok(entity)
     /// }
-    ///
     /// # fn fetch_bar(public_identifier: &str) -> Result<(), sqlx::Error> {
     /// #    Err(sqlx::Error::RowNotFound)
     /// # }
-    ///
-    /// #[derive(HttpErrorDerive, Debug)]
-    /// # #[explicit_error(StdError)]
-    /// enum NotFoundError {
-    ///     Bar(String)
-    /// }
-    /// # impl From<&NotFoundError> for HttpError {
-    /// #   fn from(value: &NotFoundError) -> Self {
-    /// #       let (label, id) = match value {
-    /// #           NotFoundError::Bar(public_identifier) => ("Bar", public_identifier)
-    /// #       };
-    /// #       HttpError::new(
-    /// #           StatusCode::NOT_FOUND,
-    /// #           ProblemDetails::new()
-    /// #               .with_type(Uri::from_static("/errors/not-found"))
-    /// #               .with_title("Not found")
-    /// #               .with_detail(format!("Unknown {label} with identifier {id}."))
-    /// #       )
-    /// #   }
-    /// # }
-    /// ```
-    /// ```rust
-    /// # use actix_web::http::StatusCode;
-    /// # use problem_details::ProblemDetails;
-    /// # use http::Uri;
-    /// use explicit_error::{Error, prelude::*};
-    /// fn authz_middleware(public_identifier: &str) -> Result<(), Error> {
-    ///     let entity = fetch_bar(&public_identifier).map_err_or_bug(|e|
-    ///         match e {
-    ///             sqlx::Error::RowNotFound => Ok(
-    ///                 forbidden()
-    ///                 .with_context(NotFoundError::Bar(
-    ///                     public_identifier.to_string()).to_string())),
-    ///             _ => Err(e), // Convert to Error::Bug
-    ///         }
-    ///     )?;
-    ///
-    ///     Ok(entity)
-    /// }
-    ///
-    /// # fn fetch_bar(public_identifier: &str) -> Result<(), sqlx::Error> {
-    /// #    Err(sqlx::Error::RowNotFound)
-    /// # }
-    /// # #[derive(HttpErrorDerive, Debug)]
-    /// # #[explicit_error(StdError)]
+    /// # #[derive(HttpError, Debug)]
     /// # enum NotFoundError {
-    /// #    Bar(String)
+    /// #     Bar(String)
     /// # }
     /// # impl From<&NotFoundError> for HttpError {
     /// #   fn from(value: &NotFoundError) -> Self {
@@ -164,14 +124,6 @@ pub trait ResultBug<T, S> {
     /// #       )
     /// #   }
     /// # }
-    /// fn forbidden() -> HttpError {
-    ///     HttpError::new(
-    ///         StatusCode::FORBIDDEN,
-    ///         ProblemDetails::new()
-    ///             .with_type(Uri::from_static("/errors/generic#forbidden"))
-    ///             .with_title("Forbidden."),
-    ///     )
-    /// }
     /// ```
     fn map_err_or_bug<F, E, D>(self, op: F) -> Result<T, Error<D>>
     where
@@ -183,8 +135,7 @@ pub trait ResultBug<T, S> {
     /// Convert any [Result::Err] into a [Result::Err] wrapping a [Bug]
     ///  ```rust
     /// # use std::fs::File;
-    /// use explicit_error::{Error, prelude::*};
-    ///
+    /// # use explicit_error_exit::{Error, prelude::*};
     /// fn foo() -> Result<(), Error> {
     ///     let file: Result<File, std::io::Error> = File::open("foo.conf");
     ///     file.bug().with_context("Configuration file foo.conf is missing.")?;
@@ -204,10 +155,8 @@ pub trait ResultBug<T, S> {
     /// Convert any [Result::Err] into a [Result::Err] wrapping a [Bug] forcing backtrace capture
     ///  ```rust
     /// # use std::fs::File;
-    /// use explicit_error::{Error, prelude::*};
-    ///
+    /// # use explicit_error_exit::{Error, prelude::*};
     /// fn foo() -> Result<(), Error> {
-    ///
     ///     let file: Result<File, std::io::Error> = File::open("foo.conf");
     ///     file.bug_force().with_context("Configuration file foo.conf is missing.")?;
     ///     # Ok(())
@@ -279,7 +228,52 @@ pub trait ResultError<T, D>
 where
     D: Domain,
 {
-    /// TODO
+    /// Pattern match on the [Error] source from either the [Error::Bug] or [Error::Domain] variant
+    /// if its type is the closure's parameter type.
+    /// # Examples
+    /// ```rust
+    /// # use actix_web::http::StatusCode;
+    /// # use http::Uri;
+    /// # use problem_details::ProblemDetails;
+    /// # use explicit_error_http::{prelude::*, HttpError, Result, derive::HttpError};
+    /// # #[derive(HttpError, Debug)]
+    /// # enum MyError {
+    /// #     Foo,
+    /// #     Bar,
+    /// # }
+    /// # impl From<&MyError> for HttpError {
+    /// #    fn from(value: &MyError) -> Self {
+    /// #        match value {
+    /// #            MyError::Foo | MyError::Bar => HttpError::new(
+    /// #                    StatusCode::BAD_REQUEST,
+    /// #                    ProblemDetails::new()
+    /// #                        .with_type(Uri::from_static("/errors/my-domain/foo"))
+    /// #                        .with_title("Foo format incorrect.")
+    /// #                ),
+    /// #        }
+    /// #    }
+    /// # }
+    /// # fn handler() -> Result<()> {
+    ///     let err: Result<()> = Err(MyError::Foo)?;
+    ///     
+    ///     // Do the map if the source's type of the Error is MyError
+    ///     err.try_map_on_source(|e| {
+    ///         match e {
+    ///             MyError::Foo => HttpError::new(
+    ///                 StatusCode::FORBIDDEN,
+    ///                 ProblemDetails::new()
+    ///                     .with_type(Uri::from_static("/errors/forbidden"))
+    ///                ),
+    ///             MyError::Bar => HttpError::new(
+    ///                 StatusCode::UNAUTHORIZED,
+    ///                 ProblemDetails::new()
+    ///                     .with_type(Uri::from_static("/errors/unauthorized"))
+    ///                ),
+    ///         }
+    ///     })?;
+    /// #     Ok(())
+    /// # }
+    /// ```
     fn try_map_on_source<F, S, E>(self, op: F) -> Result<T, Error<D>>
     where
         F: FnOnce(S) -> E,
@@ -309,12 +303,8 @@ where
             Ok(ok) => Ok(ok),
             Err(error) => match error {
                 Error::Domain(d) => {
-                    if d.source().is_some() {
-                        if (d.source().as_ref().unwrap()).is::<S>() {
-                            return Err(
-                                op(*d.into_source().unwrap().downcast::<S>().unwrap()).into()
-                            );
-                        }
+                    if d.source().is_some() && (d.source().as_ref().unwrap()).is::<S>() {
+                        return Err(op(*d.into_source().unwrap().downcast::<S>().unwrap()).into());
                     }
 
                     Err(Error::Domain(d))
@@ -348,8 +338,7 @@ pub trait OptionBug<T> {
     /// Convert an [Option::None] into a [Result::Err] wrapping a [Bug]
     /// ```rust
     /// # use std::fs::File;
-    /// use explicit_error::{Error, prelude::*};
-    ///
+    /// # use explicit_error_exit::{Error, prelude::*};
     /// fn foo() -> Result<(), Error> {
     ///     let option: Option<u8> = None;
     ///     option.bug().with_context("Help debugging")?;
@@ -361,8 +350,7 @@ pub trait OptionBug<T> {
     /// Convert an [Option::None] into a [Result::Err] wrapping a [Bug] forcing backtrace capture
     /// ```rust
     /// # use std::fs::File;
-    /// use explicit_error::{Error, prelude::*};
-    ///
+    /// # use explicit_error_exit::{Error, prelude::*};
     /// fn foo() -> Result<(), Error> {
     ///     let option: Option<u8> = None;
     ///     option.bug_force().with_context("Help debugging")?;
@@ -376,14 +364,14 @@ impl<T> OptionBug<T> for Option<T> {
     fn bug(self) -> Result<T, Bug> {
         match self {
             Some(ok) => Ok(ok),
-            None => Err(Bug::new().into()),
+            None => Err(Bug::new()),
         }
     }
 
     fn bug_force(self) -> Result<T, Bug> {
         match self {
             Some(ok) => Ok(ok),
-            None => Err(Bug::new_force().into()),
+            None => Err(Bug::new_force()),
         }
     }
 }
@@ -393,7 +381,7 @@ pub trait ResultBugWithContext<T> {
     /// Add a context to the [Bug] wrapped in a [Result::Err]
     /// # Examples
     /// ```rust
-    /// use explicit_error::{prelude::*, Bug};
+    /// # use explicit_error::{prelude::*, Bug};
     /// Err::<(), _>(Bug::new()).with_context("Foo bar");
     /// ```
     fn with_context(self, context: impl Display) -> Result<T, Bug>;

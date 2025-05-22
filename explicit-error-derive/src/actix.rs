@@ -7,7 +7,7 @@ pub fn derive(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> 
     let mut from_impl_generics = input.generics.clone();
     from_impl_generics.params.push(syn::parse_str("EE")?);
     let explicit_error_http_where = "EE: Into<explicit_error_http::Error>";
-    let from_where_clause = where_clause.clone().map_or(
+    let from_where_clause = where_clause.map_or(
         syn::parse_str(&format!("where {explicit_error_http_where}"))?,
         |w| {
             let mut c = w.clone();

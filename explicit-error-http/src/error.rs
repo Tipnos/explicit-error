@@ -71,7 +71,7 @@ use serde::Serialize;
 ///     )
 /// }
 ///
-/// // context can be added by the caller to add information in log to help debugging
+/// // context can be added by the caller to add information in log
 /// fn business_logic() -> Result<(), Error> {
 ///     Err(42).map_err(|e|
 ///         forbidden().with_context(

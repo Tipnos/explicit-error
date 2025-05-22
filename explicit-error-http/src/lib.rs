@@ -5,12 +5,12 @@
 //! - Explicitly mark any error wrapped in a [Result] as a [Bug]. A backtrace is captured and a 500 Internal Server HTTP response generated.
 //! - A derive macro [HttpError](derive::HttpError) to easily declare how enum or struct errors transform into an [Error], i.e. defines the generated HTTP response.
 //! - Inline transformation of any errors wrapped in a [Result] into an [Error].
-//! - Add context to errors to help debugging.
+//! - Add context to errors to help debug.
 //! - Monitor errors before they are transformed into proper HTTP responses. The implementation is different depending on the web framework used, to have more details refer to the `Web frameworks` section.
 //!
 //! # A tour of explicit-error-http
 //!
-//! The cornerstone of the library is the [Error] type. Use `Result<T, explicit_error_http::Error>`, or equivalently `explicit_error_http::Result<T>`, as the return type of any faillible function returning errors that convert to HTTP response.
+//! The cornerstone of the library is the [Error] type. Use `Result<T, explicit_error_http::Error>`, or equivalently `explicit_error_http::Result<T>`, as the return type of any faillible function returning errors that convert to an HTTP response.
 //! Usually, it is mostly functions either called by handlers or middlewares.
 //!
 //! ## Inline
@@ -32,7 +32,7 @@
 //!
 //!     if 1 > 2 {
 //!         Err(Bug::new()
-//!             .with_context("Usefull context to help debugging."))?;
+//!             .with_context("Usefull context to help debug."))?;
 //!     }
 //!
 //!     Err(42).map_err(|_|
@@ -217,7 +217,6 @@ pub type Error = explicit_error::Error<DomainError>;
 pub type Result<T> = std::result::Result<T, explicit_error::Error<DomainError>>;
 
 pub mod prelude {
-    // pub use crate::ResultDomainWithContext;
     pub use explicit_error::prelude::*;
 }
 

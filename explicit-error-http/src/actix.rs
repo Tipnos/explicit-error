@@ -2,15 +2,15 @@ use crate::{DomainError, error::HttpError};
 use actix_web::{HttpResponse, http::StatusCode};
 use serde::Serializer;
 
-impl Into<HttpResponse> for &DomainError {
-    fn into(self) -> HttpResponse {
-        HttpResponse::build(self.output.http_status_code).json(&self.output.public)
+impl From<&DomainError> for HttpResponse {
+    fn from(value: &DomainError) -> Self {
+        HttpResponse::build(value.output.http_status_code).json(&value.output.public)
     }
 }
 
-impl Into<HttpResponse> for &HttpError {
-    fn into(self) -> HttpResponse {
-        HttpResponse::build(self.http_status_code).json(&self.public)
+impl From<&HttpError> for HttpResponse {
+    fn from(value: &HttpError) -> Self {
+        HttpResponse::build(value.http_status_code).json(&value.public)
     }
 }
 

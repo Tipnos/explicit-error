@@ -5,7 +5,7 @@
 //! - Explicitly mark any error wrapped in a [Result] as a [Bug], a backtrace is captured.
 //! - Inline transformation of any errors wrapped in a [Result] into an [Error].
 //! - A derive macro [ExitError](derive::ExitError) to easily declare how enum or struct errors transform into an [Error].
-//! - Add context to errors to help debugging.
+//! - Add context to errors to help debug.
 //!
 //! # A tour of explicit-error-bin
 //!
@@ -27,7 +27,7 @@
 //!
 //!     if 1 > 2 {
 //!         Err(Bug::new()
-//!             .with_context("Usefull context to help debugging."))?;
+//!             .with_context("Usefull context to help debug."))?;
 //!     }
 //!
 //!     Err(42).map_err(|e|

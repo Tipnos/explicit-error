@@ -2,6 +2,14 @@ use crate::{domain::Domain, error::Error};
 use serde::{Serialize, Serializer};
 use std::{backtrace::Backtrace, error::Error as StdError};
 
+/// Wrapper for errors that should not happen but cannot panic.
+/// It is wrapped in the [Error::Bug] variant.
+///
+/// To generate it from predicates use [Bug::new], from [Result] or [Option]
+/// import the prelude and use either [bug()](crate::error::ResultBug::bug),
+/// [bug_with_source()](crate::error::ResultBug::bug_with_source),
+/// [bug_force()](crate::error::ResultBug::bug_force),
+/// [bug_force_with_source()](crate::error::ResultBug::bug_force_with_source)
 #[derive(Debug, Serialize)]
 pub struct Bug {
     #[serde(serialize_with = "serialize_source")]
@@ -78,11 +86,10 @@ impl Bug {
     /// On a [Result](std::result::Result) use [map_err_or_bug](crate::ResultBug::map_err_or_bug) to be more concise.
     /// # Examples
     /// ```rust
-    /// # use explicit_error_http::{prelude::*, Error, HttpError, Bug};
+    /// # use explicit_error_http::{prelude::*, Error, HttpError, Bug, derive::HttpError};
     /// # use problem_details::ProblemDetails;
     /// # use actix_web::http::StatusCode;
-    /// use explicit_error_http::Result;
-    ///
+    /// # use explicit_error_http::Result;
     /// fn fetch() -> Result<()> {
     ///     let sqlx_error = sqlx::Error::RowNotFound;
     ///     Err(match sqlx_error {
@@ -90,13 +97,10 @@ impl Bug {
     ///         _ => Bug::new().with_source(sqlx_error).into()
     ///     })
     /// }
-    ///
-    /// # #[derive(HttpErrorDerive, Debug)]
-    /// # #[explicit_error_http(StdError)]
+    /// # #[derive(HttpError, Debug)]
     /// # enum MyEntitysError {
     /// #    NotFound,
     /// # }
-    ///
     /// # impl From<&MyEntitysError> for HttpError {
     /// #     fn from(value: &MyEntitysError) -> Self {
     /// #         match value {
