@@ -165,7 +165,7 @@
 //!
 //! impl HandlerError for MyHandlerError {
 //!     // Used by the derive for conversion
-//!     fn from_http_error(value: Error) -> Self {
+//!     fn from_error(value: Error) -> Self {
 //!         MyHandlerError(value)
 //!     }
 //!
@@ -182,17 +182,18 @@
 //!             .with_title("Internal server error")
 //!     }
 //!
-//!     fn http_error(&self) -> &Error {
+//!     fn error(&self) -> &Error {
 //!         &self.0
 //!     }
 //!
-//!     // Monitor domain variant of your errors
-//!     fn on_domain_response(error: &explicit_error_http::DomainError) {
+//!     // Monitor domain variant of your errors and eventually override their body
+//!     fn domain_response(error: &explicit_error_http::DomainError) -> impl Serialize {
 //!         if error.output.http_status_code.as_u16() < 500 {
 //!             debug!("{error}");
 //!         } else {
 //!             error!("{error}");
 //!         }
+//!         error
 //!     }
 //! }
 //!

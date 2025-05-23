@@ -9,7 +9,7 @@ use serde::Serialize;
 struct MyHandlerError(Error);
 
 impl HandlerError for MyHandlerError {
-    fn from_http_error(value: Error) -> Self {
+    fn from_error(value: Error) -> Self {
         MyHandlerError(value)
     }
 
@@ -25,16 +25,18 @@ impl HandlerError for MyHandlerError {
             .with_title("Internal server error")
     }
 
-    fn http_error(&self) -> &Error {
+    fn error(&self) -> &Error {
         &self.0
     }
 
-    fn on_domain_response(error: &explicit_error_http::DomainError) {
+    fn domain_response(error: &explicit_error_http::DomainError) -> impl Serialize {
         if error.output.http_status_code.as_u16() < 500 {
             debug!("{error}");
         } else {
             error!("{error}");
         }
+
+        error
     }
 }
 

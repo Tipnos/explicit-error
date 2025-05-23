@@ -1,6 +1,5 @@
-use crate::error::HttpError;
+use crate::{HttpErrorDisplay, error::HttpError};
 use explicit_error::{Domain, Error};
-use explicit_error_derive::JSONDisplay;
 use serde::{Serialize, Serializer};
 use std::{error::Error as StdError, fmt::Debug};
 
@@ -93,11 +92,11 @@ use std::{error::Error as StdError, fmt::Debug};
 /// Some(12).ok_or(HttpError::new(StatusCode::FORBIDDEN, ""))?;
 /// # Ok::<(), HttpError>(())
 /// ```
-#[derive(Debug, Serialize, JSONDisplay)]
+#[derive(Debug, Serialize)]
 pub struct DomainError {
     #[serde(flatten)]
     pub output: HttpError,
-    #[serde(serialize_with = "serialize_source_box")]
+    #[serde(skip)]
     pub source: Option<Box<dyn StdError>>,
 }
 
@@ -121,6 +120,33 @@ impl From<DomainError> for Error<DomainError> {
 impl StdError for DomainError {
     fn source(&self) -> Option<&(dyn StdError + 'static)> {
         self.source.as_ref().map(|o| o.as_ref())
+    }
+}
+
+#[derive(Serialize)]
+struct DomainErrorDisplay<'s> {
+    #[serde(flatten)]
+    output: HttpErrorDisplay<'s>,
+    #[serde(serialize_with = "serialize_option_source_dyn")]
+    pub source: Option<&'s dyn StdError>,
+}
+
+impl<'s> From<&'s DomainError> for DomainErrorDisplay<'s> {
+    fn from(value: &'s DomainError) -> Self {
+        Self {
+            output: HttpErrorDisplay::<'s>::from(&value.output),
+            source: value.source.as_deref(),
+        }
+    }
+}
+
+impl std::fmt::Display for DomainError {
+    fn fmt<'s>(&'s self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            serde_json::json!(DomainErrorDisplay::<'s>::from(self))
+        )
     }
 }
 
@@ -148,7 +174,8 @@ where
 
         write!(
             f,
-            "{}",
+            r#"{{"output":"{}","source":}}{}"#,
+            Into::<HttpError>::into(self),
             serde_json::json!(S {
                 output: self.into(),
                 source: self,
@@ -185,20 +212,22 @@ where
     }
 }
 
-fn serialize_source_box<S>(source: &Option<Box<dyn StdError>>, s: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    if let Some(source) = source {
-        serialize_source_dyn(source.as_ref(), s)
-    } else {
-        s.serialize_none()
-    }
-}
-
 fn serialize_source_dyn<S>(source: &dyn StdError, s: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
 {
     s.serialize_str(&explicit_error::errors_chain_debug(source))
 }
+
+fn serialize_option_source_dyn<S>(source: &Option<&dyn StdError>, s: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    match source {
+        Some(source) => serialize_source_dyn(source, s),
+        None => s.serialize_none(),
+    }
+}
+
+#[cfg(test)]
+mod test;

@@ -10,8 +10,6 @@ mod domain;
 
 #[cfg(any(feature = "http", feature = "exit", feature = "actix-web"))]
 use proc_macro::TokenStream;
-#[cfg(feature = "http")]
-use quote::quote;
 #[cfg(any(feature = "http", feature = "exit", feature = "actix-web"))]
 use syn::{DeriveInput, parse_macro_input};
 
@@ -43,23 +41,4 @@ pub fn derive_actix_handler_error(input: TokenStream) -> TokenStream {
     actix::derive(input)
         .unwrap_or_else(syn::Error::into_compile_error)
         .into()
-}
-
-#[cfg(feature = "http")]
-#[proc_macro_derive(JSONDisplay)]
-pub fn json_display(input: TokenStream) -> TokenStream {
-    let input = parse_macro_input!(input as DeriveInput);
-    let ident = input.ident;
-    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
-
-    let expanded = quote! {
-        #[automatically_derived]
-        impl #impl_generics std::fmt::Display for #ident #ty_generics #where_clause {
-            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                write!(f, "{}", serde_json::json!(self))
-            }
-        }
-    };
-
-    TokenStream::from(expanded)
 }
