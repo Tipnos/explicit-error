@@ -4,20 +4,19 @@ use serde::Serialize;
 
 /// The type [Error] cannot directly be used as handlers or middlewares returned [Err] variant. A dedicated type is required.
 /// The easiest implementation is to declare a [Newtype](https://doc.rust-lang.org/rust-by-example/generics/new_types.html),
-/// derive it with the [HandlerError](crate::derive::HandlerError) and implement the [HandlerError] trait.
-///
+/// derive it with the [HandlerErrorHelpers](crate::derive::HandlerErrorHelpers) and implement the [HandlerError] trait.
 /// ```rust
 /// # use actix_web::{App, HttpResponse, HttpServer, get};
-/// # use explicit_error_http::{Bug, Error, HandlerError, derive::HandlerError};
+/// # use explicit_error_http::{Bug, Error, HandlerError, derive::HandlerErrorHelpers};
 /// # use log::{debug, error};
 /// # use problem_details::ProblemDetails;
 /// # use serde::Serialize;
-/// #[derive(HandlerError)]
+/// #[derive(HandlerErrorHelpers)]
 /// struct MyHandlerError(Error);
 ///
 /// impl HandlerError for MyHandlerError {
 ///     // Used by the derive for conversion
-///     fn from_http_error(value: Error) -> Self {
+///     fn from_error(value: Error) -> Self {
 ///         MyHandlerError(value)
 ///     }
 ///
@@ -34,17 +33,18 @@ use serde::Serialize;
 ///             .with_title("Internal server error")
 ///     }
 ///
-///     fn http_error(&self) -> &Error {
+///     fn error(&self) -> &Error {
 ///         &self.0
 ///     }
 ///
-///     // Monitor domain variant of your errors
-///     fn on_domain_response(error: &explicit_error_http::DomainError) {
+///     // Monitor domain variant of your errors and eventually override their body
+///     fn domain_response(error: &explicit_error_http::DomainError) -> impl Serialize {
 ///         if error.output.http_status_code.as_u16() < 500 {
 ///             debug!("{error}");
 ///         } else {
 ///             error!("{error}");
 ///         }
+///         error
 ///     }
 /// }
 ///
@@ -53,9 +53,12 @@ use serde::Serialize;
 ///     Ok(HttpResponse::Ok().finish())
 /// }
 /// ```
-pub trait HandlerError {
-    /// Accessor required by [HandlerError](crate::derive::HandlerError)
-    fn http_error(&self) -> &Error;
+pub trait HandlerError
+where
+    Self: std::fmt::Debug + std::fmt::Display,
+{
+    /// Accessor required by [HandlerErrorHelpers](crate::derive::HandlerErrorHelpers)
+    fn error(&self) -> &Error;
 
     /// Set-up monitoring and your custom HTTP response body for bugs
     /// # Examples
@@ -78,20 +81,22 @@ pub trait HandlerError {
     /// ```
     fn public_bug_response(bug: &Bug) -> impl Serialize;
 
-    /// Monitor domain variant of your errors
+    /// Monitor domain variant of your errors and eventually override their body
     /// # Examples
     /// ```rust
     /// # use log::{debug, error};
-    /// fn on_domain_response(error: &explicit_error_http::DomainError) {
+    /// # use serde::Serialize;
+    /// fn domain_response(error: &explicit_error_http::DomainError) -> impl Serialize {
     ///     if error.output.http_status_code.as_u16() < 500 {
     ///         debug!("{error}");
     ///     } else {
     ///         error!("{error}");
     ///     }
+    ///     error
     /// }
     /// ```
-    fn on_domain_response(error: &DomainError);
+    fn domain_response(error: &DomainError) -> impl Serialize;
 
     /// Used by the derive for conversion
-    fn from_http_error(value: Error) -> Self;
+    fn from_error(value: Error) -> Self;
 }

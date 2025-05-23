@@ -1,6 +1,5 @@
 use crate::Error;
 use erased_serde::Serialize as DynSerialize;
-use explicit_error_derive::JSONDisplay;
 use serde::Serialize;
 
 /// Self-sufficient container to both log an error and generate its HTTP response. Regarding the web framework you use, its shape can be different.
@@ -80,12 +79,14 @@ use serde::Serialize;
 ///     # Ok(())
 /// }
 /// ```
-#[derive(Serialize, JSONDisplay)]
+#[derive(Serialize)]
 pub struct HttpError {
     #[cfg(feature = "actix-web")]
-    #[serde(serialize_with = "crate::actix::serialize_http_status_code")]
+    #[serde(skip)]
     pub http_status_code: actix_web::http::StatusCode,
+    #[serde(flatten)]
     pub public: Box<dyn DynSerialize>,
+    #[serde(skip)]
     pub context: Option<String>,
 }
 
@@ -158,8 +159,40 @@ impl From<HttpError> for Error {
     }
 }
 
+#[derive(Serialize)]
+pub(crate) struct HttpErrorDisplay<'s> {
+    #[cfg(feature = "actix-web")]
+    #[serde(serialize_with = "crate::actix::serialize_http_status_code")]
+    pub http_status_code: actix_web::http::StatusCode,
+    pub public: &'s dyn DynSerialize,
+    pub context: Option<&'s str>,
+}
+
+impl<'s> From<&'s HttpError> for HttpErrorDisplay<'s> {
+    fn from(value: &'s HttpError) -> Self {
+        Self {
+            http_status_code: value.http_status_code,
+            public: value.public.as_ref(),
+            context: value.context.as_deref(),
+        }
+    }
+}
+
+impl std::fmt::Display for HttpError {
+    fn fmt<'s>(&'s self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            serde_json::json!(HttpErrorDisplay::<'s>::from(self))
+        )
+    }
+}
+
 impl std::fmt::Debug for HttpError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "HttpError{}", self)
     }
 }
+
+#[cfg(test)]
+mod test;

@@ -156,16 +156,16 @@
 //! ```rust
 //! # use actix_web::{App, HttpResponse, HttpServer, get};
 //! # use env_logger::Env;
-//! # use explicit_error_http::{Bug, Error, HandlerError, derive::HandlerError};
+//! # use explicit_error_http::{Bug, Error, HandlerError, derive::HandlerErrorHelpers};
 //! # use log::{debug, error};
 //! # use problem_details::ProblemDetails;
 //! # use serde::Serialize;
-//! #[derive(HandlerError)]
+//! #[derive(HandlerErrorHelpers)]
 //! struct MyHandlerError(Error);
 //!
 //! impl HandlerError for MyHandlerError {
 //!     // Used by the derive for conversion
-//!     fn from_http_error(value: Error) -> Self {
+//!     fn from_error(value: Error) -> Self {
 //!         MyHandlerError(value)
 //!     }
 //!
@@ -182,17 +182,18 @@
 //!             .with_title("Internal server error")
 //!     }
 //!
-//!     fn http_error(&self) -> &Error {
+//!     fn error(&self) -> &Error {
 //!         &self.0
 //!     }
 //!
-//!     // Monitor domain variant of your errors
-//!     fn on_domain_response(error: &explicit_error_http::DomainError) {
+//!     // Monitor domain variant of your errors and eventually override their body
+//!     fn domain_response(error: &explicit_error_http::DomainError) -> impl Serialize {
 //!         if error.output.http_status_code.as_u16() < 500 {
 //!             debug!("{error}");
 //!         } else {
 //!             error!("{error}");
 //!         }
+//!         error
 //!     }
 //! }
 //!
@@ -222,6 +223,6 @@ pub mod prelude {
 }
 
 pub mod derive {
-    pub use explicit_error_derive::HandlerError;
+    pub use explicit_error_derive::HandlerErrorHelpers;
     pub use explicit_error_derive::HttpError;
 }

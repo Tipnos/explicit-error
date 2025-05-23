@@ -143,12 +143,12 @@ The easiest implementation is to declare a [Newtype](https://doc.rust-lang.org/r
 derive it with the [HandlerError] and implement the [HandlerError] trait.
 
 ```rust
-#[derive(HandlerError)]
+#[derive(HandlerErrorHelpers)]
 struct MyHandlerError(Error);
 
 impl HandlerError for MyHandlerError {
     // Used by the derive for conversion
-    fn from_http_error(value: Error) -> Self {
+    fn from_error(value: Error) -> Self {
         MyHandlerError(value)
     }
 
@@ -165,17 +165,18 @@ impl HandlerError for MyHandlerError {
             .with_title("Internal server error")
     }
 
-    fn http_error(&self) -> &Error {
+    fn error(&self) -> &Error {
         &self.0
     }
 
-    // Monitor domain variant of your errors
-    fn on_domain_response(error: &explicit_error_http::DomainError) {
+    // Monitor domain variant of your errors and eventually override their body
+    fn domain_response(error: &explicit_error_http::DomainError) -> impl Serialize {
         if error.output.http_status_code.as_u16() < 500 {
             debug!("{error}");
         } else {
             error!("{error}");
         }
+        error
     }
 }
 
