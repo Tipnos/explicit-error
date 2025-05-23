@@ -26,7 +26,7 @@ pub fn derive(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> 
                 match self.error() {
                     explicit_error_http::Error::Domain(d) => {
                         let status_code = d.output.http_status_code;
-                        HttpResponse::build(status_code).json(<Self as HandlerError>::domain_response(d))
+                        actix_web::HttpResponse::build(status_code).json(<Self as HandlerError>::domain_response(d))
                     },
                     explicit_error_http::Error::Bug(b) => actix_web::HttpResponse::InternalServerError().json(<Self as explicit_error_http::HandlerError>::public_bug_response(b)),
                 }
