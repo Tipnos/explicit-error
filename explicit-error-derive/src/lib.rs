@@ -34,7 +34,7 @@ pub fn derive_bin_error(input: TokenStream) -> TokenStream {
 }
 
 #[cfg(feature = "actix-web")]
-#[proc_macro_derive(HandlerError)]
+#[proc_macro_derive(HandlerErrorHelpers)]
 pub fn derive_actix_handler_error(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 

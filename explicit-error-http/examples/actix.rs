@@ -1,11 +1,11 @@
 use actix_web::{App, HttpResponse, HttpServer, get};
 use env_logger::Env;
-use explicit_error_http::{Bug, Error, HandlerError, derive::HandlerError};
+use explicit_error_http::{Bug, Error, HandlerError, derive::HandlerErrorHelpers};
 use log::{debug, error};
 use problem_details::ProblemDetails;
 use serde::Serialize;
 
-#[derive(HandlerError)]
+#[derive(HandlerErrorHelpers)]
 struct MyHandlerError(Error);
 
 impl HandlerError for MyHandlerError {
