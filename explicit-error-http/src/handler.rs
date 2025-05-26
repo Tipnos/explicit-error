@@ -1,5 +1,5 @@
 use crate::{DomainError, Error};
-use explicit_error::Bug;
+use explicit_error::Fault;
 use serde::Serialize;
 
 /// The type [Error] cannot directly be used as handlers or middlewares returned [Err] variant. A dedicated type is required.
@@ -7,7 +7,7 @@ use serde::Serialize;
 /// derive it with the [HandlerErrorHelpers](crate::derive::HandlerErrorHelpers) and implement the [HandlerError] trait.
 /// ```rust
 /// # use actix_web::{App, HttpResponse, HttpServer, get};
-/// # use explicit_error_http::{Bug, Error, HandlerError, derive::HandlerErrorHelpers};
+/// # use explicit_error_http::{Fault, Error, HandlerError, derive::HandlerErrorHelpers};
 /// # use log::{debug, error};
 /// # use problem_details::ProblemDetails;
 /// # use serde::Serialize;
@@ -20,13 +20,13 @@ use serde::Serialize;
 ///         MyHandlerError(value)
 ///     }
 ///
-///     // Set-up monitoring and your custom HTTP response body for bugs
-///     fn public_bug_response(bug: &Bug) -> impl Serialize {
+///     // Set-up monitoring and your custom HTTP response body for faults
+///     fn public_fault_response(fault: &Fault) -> impl Serialize {
 ///         #[cfg(debug_assertions)]
-///         error!("{bug}");
+///         error!("{fault}");
 ///
 ///         #[cfg(not(debug_assertions))]
-///         error!("{}", serde_json::json!(bug));
+///         error!("{}", serde_json::json!(fault));
 ///
 ///         ProblemDetails::new()
 ///             .with_type(http::Uri::from_static("/errors/internal-server-error"))
@@ -60,26 +60,26 @@ where
     /// Accessor required by [HandlerErrorHelpers](crate::derive::HandlerErrorHelpers)
     fn error(&self) -> &Error;
 
-    /// Set-up monitoring and your custom HTTP response body for bugs
+    /// Set-up monitoring and your custom HTTP response body for faults
     /// # Examples
     /// ```rust
-    /// # use explicit_error_http::Bug;
+    /// # use explicit_error_http::Fault;
     /// # use log::{debug, error};
     /// # use problem_details::ProblemDetails;
     /// # use serde::Serialize;
-    /// fn public_bug_response(bug: &Bug) -> impl Serialize {
+    /// fn public_fault_response(fault: &Fault) -> impl Serialize {
     ///     #[cfg(debug_assertions)]
-    ///     error!("{bug}");
+    ///     error!("{fault}");
     ///
     ///     #[cfg(not(debug_assertions))]
-    ///     error!("{}", serde_json::json!(bug));
+    ///     error!("{}", serde_json::json!(fault));
     ///
     ///     ProblemDetails::new()
     ///         .with_type(http::Uri::from_static("/errors/internal-server-error"))
     ///         .with_title("Internal server error")
     /// }
     /// ```
-    fn public_bug_response(bug: &Bug) -> impl Serialize;
+    fn public_fault_response(fault: &Fault) -> impl Serialize;
 
     /// Monitor domain variant of your errors and eventually override their body
     /// # Examples

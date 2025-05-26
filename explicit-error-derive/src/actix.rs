@@ -13,14 +13,14 @@ pub fn derive(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> 
                         let status_code = d.output.http_status_code;
                         actix_web::HttpResponse::build(status_code).json(<Self as HandlerError>::domain_response(d))
                     },
-                    explicit_error_http::Error::Bug(b) => actix_web::HttpResponse::InternalServerError().json(<Self as explicit_error_http::HandlerError>::public_bug_response(b)),
+                    explicit_error_http::Error::Fault(b) => actix_web::HttpResponse::InternalServerError().json(<Self as explicit_error_http::HandlerError>::public_fault_response(b)),
                 }
             }
         }
 
         #[automatically_derived]
-        impl #impl_generics From<explicit_error_http::Bug> for #ident #ty_generics #where_clause {
-            fn from(value: explicit_error_http::Bug) -> Self {
+        impl #impl_generics From<explicit_error_http::Fault> for #ident #ty_generics #where_clause {
+            fn from(value: explicit_error_http::Fault) -> Self {
                 <Self as explicit_error_http::HandlerError>::from_error(value.into())
             }
         }

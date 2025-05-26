@@ -1,17 +1,17 @@
-use crate::bug::*;
 use crate::domain::Domain;
+use crate::fault::*;
 use crate::unwrap_failed;
 use std::{error::Error as StdError, fmt::Display};
 
 /// Use `Result<T, explicit_error::Error>` as the return type of any binary crate
 /// faillible function returning errors.
-/// The [Error::Bug] variant is for errors that should not happen but cannot panic.
+/// The [Error::Fault] variant is for errors that should not happen but cannot panic.
 /// The [Error::Domain] variant is for domain errors that provide feedbacks to the user.
 /// For library or functions that require the caller to pattern match on the returned error, a dedicated type is prefered.
 #[derive(Debug)]
 pub enum Error<D: Domain> {
     Domain(Box<D>), // Box for size: https://doc.rust-lang.org/clippy/lint_configuration.html#large-error-threshold
-    Bug(Bug),
+    Fault(Fault),
 }
 
 impl<D> StdError for Error<D>
@@ -21,7 +21,7 @@ where
     fn source(&self) -> Option<&(dyn StdError + 'static)> {
         match self {
             Error::Domain(explicit_error) => Some(explicit_error.as_ref()),
-            Error::Bug(bug) => bug.source.as_ref().map(|e| e.as_ref()),
+            Error::Fault(fault) => fault.source.as_ref().map(|e| e.as_ref()),
         }
     }
 }
@@ -33,7 +33,7 @@ where
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Error::Domain(explicit_error) => Display::fmt(&explicit_error, f),
-            Error::Bug(bug) => bug.fmt(f),
+            Error::Fault(fault) => fault.fmt(f),
         }
     }
 }
@@ -47,8 +47,8 @@ where
         matches!(*self, Error::Domain(_))
     }
 
-    /// Return true if it's a [Error::Bug] variant
-    pub fn is_bug(&self) -> bool {
+    /// Return true if it's a [Error::Fault] variant
+    pub fn is_fault(&self) -> bool {
         !self.is_domain()
     }
 
@@ -56,25 +56,25 @@ where
     pub fn unwrap(self) -> D {
         match self {
             Self::Domain(e) => *e,
-            Self::Bug(b) => unwrap_failed("called `Error::unwrap()` on an `Bug` value", &b),
+            Self::Fault(f) => unwrap_failed("called `Error::unwrap()` on an `Fault` value", &f),
         }
     }
 
-    /// Unwrap the [Error::Bug] variant, panic otherwise
-    pub fn unwrap_bug(self) -> Bug {
+    /// Unwrap the [Error::Fault] variant, panic otherwise
+    pub fn unwrap_fault(self) -> Fault {
         match self {
-            Self::Bug(b) => b,
+            Self::Fault(b) => b,
             Self::Domain(e) => {
                 unwrap_failed("called `Error::unwrap_err()` on an `Domain` value", &e)
             }
         }
     }
 
-    /// Unwrap the source of either [Error::Domain] or [Error::Bug] variant, panic otherwise
+    /// Unwrap the source of either [Error::Domain] or [Error::Fault] variant, panic otherwise
     pub fn unwrap_source(self) -> Box<dyn StdError + 'static> {
         match self {
             Error::Domain(domain) => domain.into_source().unwrap(),
-            Error::Bug(bug) => bug.source.unwrap(),
+            Error::Fault(fault) => fault.source.unwrap(),
         }
     }
 }
@@ -93,10 +93,10 @@ pub fn errors_chain_debug(source: &dyn StdError) -> String {
 }
 
 /// To use this trait on [Result] import the prelude `use explicit_error::prelude::*`
-pub trait ResultBug<T, S> {
+pub trait ResultFault<T, S> {
     /// Convert with a closure any error wrapped in a [Result] to an [Error]. Returning an [Ok] convert the wrapped type to
     /// [Error::Domain].
-    /// Returning an [Err] generates a [Bug] with the orginal error has its source.
+    /// Returning an [Err] generates a [Fault] with the orginal error has its source.
     /// # Examples
     /// Pattern match to convert to an [Error::Domain]
     /// ```rust
@@ -105,12 +105,12 @@ pub trait ResultBug<T, S> {
     /// # use http::Uri;
     /// # use explicit_error_http::{Error, prelude::*, HttpError, derive::HttpError};
     /// fn authz_middleware(public_identifier: &str) -> Result<(), Error> {
-    ///     let entity = fetch_bar(&public_identifier).map_err_or_bug(|e|
+    ///     let entity = fetch_bar(&public_identifier).map_err_or_fault(|e|
     ///         match e {
     ///             sqlx::Error::RowNotFound => Ok(
     ///                 NotFoundError::Bar(
     ///                     public_identifier.to_string())),
-    ///             _ => Err(e), // Convert to Error::Bug
+    ///             _ => Err(e), // Convert to Error::Fault
     ///         }
     ///     )?;
     ///
@@ -138,76 +138,76 @@ pub trait ResultBug<T, S> {
     /// #   }
     /// # }
     /// ```
-    fn map_err_or_bug<F, E, D>(self, op: F) -> Result<T, Error<D>>
+    fn map_err_or_fault<F, E, D>(self, op: F) -> Result<T, Error<D>>
     where
         F: FnOnce(S) -> Result<E, S>,
         E: Into<Error<D>>,
         S: StdError + 'static,
         D: Domain;
 
-    /// Convert any [Result::Err] into a [Result::Err] wrapping a [Bug]
-    /// Use [bug](ResultBug::bug) instead if the error implements [std::error::Error]
+    /// Convert any [Result::Err] into a [Result::Err] wrapping a [Fault]
+    /// Use [fault](ResultFault::fault) instead if the error implements [std::error::Error]
     ///  ```rust
     /// # use std::fs::File;
     /// # use explicit_error_exit::{Error, prelude::*};
     /// fn foo() -> Result<(), Error> {
     ///     let file: Result<File, std::io::Error> = File::open("foo.conf");
-    ///     file.bug_no_source().with_context("Configuration file foo.conf is missing.")?;
+    ///     file.fault_no_source().with_context("Configuration file foo.conf is missing.")?;
     ///
-    ///     Err("error message").bug_no_source()?;
+    ///     Err("error message").fault_no_source()?;
     ///     # Ok(())
     /// }
     /// ```
-    fn bug_no_source(self) -> Result<T, Bug>;
+    fn fault_no_source(self) -> Result<T, Fault>;
 
     /// Convert any [Result::Err] wrapping an error that implements
-    /// [std::error::Error] into a [Result::Err] wrapping a [Bug]
+    /// [std::error::Error] into a [Result::Err] wrapping a [Fault]
     ///  ```rust
     /// # use std::fs::File;
     /// # use explicit_error_exit::{Error, prelude::*};
     /// fn foo() -> Result<(), Error> {
     ///     Err(sqlx::Error::RowNotFound)
-    ///         .bug()
+    ///         .fault()
     ///         .with_context("Configuration file foo.conf is missing.")?;
     ///     # Ok(())
     /// }
     /// ```
-    fn bug(self) -> Result<T, Bug>
+    fn fault(self) -> Result<T, Fault>
     where
         S: StdError + 'static;
 
-    /// Convert any [Result::Err] into a [Result::Err] wrapping a [Bug] forcing backtrace capture
-    /// Use [bug_force](ResultBug::bug_force) instead if the error implements [std::error::Error]
+    /// Convert any [Result::Err] into a [Result::Err] wrapping a [Fault] forcing backtrace capture
+    /// Use [fault_force](ResultFault::fault_force) instead if the error implements [std::error::Error]
     ///  ```rust
     /// # use std::fs::File;
     /// # use explicit_error_exit::{Error, prelude::*};
     /// fn foo() -> Result<(), Error> {
     ///     let file: Result<File, std::io::Error> = File::open("foo.conf");
-    ///     file.bug_force().with_context("Configuration file foo.conf is missing.")?;
+    ///     file.fault_force().with_context("Configuration file foo.conf is missing.")?;
     ///     # Ok(())
     /// }
     /// ```
-    fn bug_no_source_force(self) -> Result<T, Bug>;
+    fn fault_no_source_force(self) -> Result<T, Fault>;
 
     /// Convert any [Result::Err] wrapping an error that implements
-    /// [std::error::Error] into a [Result::Err] wrapping a [Bug] forcing backtrace capture
+    /// [std::error::Error] into a [Result::Err] wrapping a [Fault] forcing backtrace capture
     ///  ```rust
     /// # use std::fs::File;
     /// # use explicit_error_exit::{Error, prelude::*};
     /// fn foo() -> Result<(), Error> {
     ///     Err(sqlx::Error::RowNotFound)
-    ///         .bug_force()
+    ///         .fault_force()
     ///         .with_context("Configuration file foo.conf is missing.")?;
     ///     # Ok(())
     /// }
     /// ```
-    fn bug_force(self) -> Result<T, Bug>
+    fn fault_force(self) -> Result<T, Fault>
     where
         S: StdError + 'static;
 }
 
-impl<T, S> ResultBug<T, S> for Result<T, S> {
-    fn map_err_or_bug<F, E, D>(self, op: F) -> Result<T, Error<D>>
+impl<T, S> ResultFault<T, S> for Result<T, S> {
+    fn map_err_or_fault<F, E, D>(self, op: F) -> Result<T, Error<D>>
     where
         F: FnOnce(S) -> Result<E, S>,
         E: Into<Error<D>>,
@@ -218,42 +218,42 @@ impl<T, S> ResultBug<T, S> for Result<T, S> {
             Ok(ok) => Ok(ok),
             Err(error) => Err(match op(error) {
                 Ok(d) => d.into(),
-                Err(e) => Bug::new().with_source(e).into(),
+                Err(e) => Fault::new().with_source(e).into(),
             }),
         }
     }
 
-    fn bug_no_source(self) -> Result<T, Bug> {
+    fn fault_no_source(self) -> Result<T, Fault> {
         match self {
             Ok(ok) => Ok(ok),
-            Err(_) => Err(Bug::new()),
+            Err(_) => Err(Fault::new()),
         }
     }
 
-    fn bug_no_source_force(self) -> Result<T, Bug> {
+    fn fault_no_source_force(self) -> Result<T, Fault> {
         match self {
             Ok(ok) => Ok(ok),
-            Err(_) => Err(Bug::new_force()),
+            Err(_) => Err(Fault::new_force()),
         }
     }
 
-    fn bug(self) -> Result<T, Bug>
+    fn fault(self) -> Result<T, Fault>
     where
         S: StdError + 'static,
     {
         match self {
             Ok(ok) => Ok(ok),
-            Err(error) => Err(Bug::new().with_source(error)),
+            Err(error) => Err(Fault::new().with_source(error)),
         }
     }
 
-    fn bug_force(self) -> Result<T, Bug>
+    fn fault_force(self) -> Result<T, Fault>
     where
         S: StdError + 'static,
     {
         match self {
             Ok(ok) => Ok(ok),
-            Err(error) => Err(Bug::new_force().with_source(error)),
+            Err(error) => Err(Fault::new_force().with_source(error)),
         }
     }
 }
@@ -263,7 +263,7 @@ pub trait ResultError<T, D>
 where
     D: Domain,
 {
-    /// Pattern match on the [Error] source from either the [Error::Bug] or [Error::Domain] variant
+    /// Pattern match on the [Error] source from either the [Error::Fault] or [Error::Domain] variant
     /// if its type is the closure's parameter type.
     /// # Examples
     /// ```rust
@@ -318,12 +318,12 @@ where
     /// Add a context to any variant of an [Error] wrapped in a [Result::Err]
     /// # Examples
     /// ```rust
-    /// use explicit_error::{prelude::*, Bug};
-    /// Err::<(), _>(Bug::new()).with_context("Foo bar");
+    /// use explicit_error::{prelude::*, Fault};
+    /// Err::<(), _>(Fault::new()).with_context("Foo bar");
     /// ```
     fn with_context(self, context: impl Display) -> Result<T, Error<D>>;
 
-    /// Unwrap and downcast the source of either [Error::Domain] or [Error::Bug] variant, panic otherwise.
+    /// Unwrap and downcast the source of either [Error::Domain] or [Error::Fault] variant, panic otherwise.
     /// Usefull to assert_eq! in tests
     /// # Examples
     /// ```rust
@@ -381,14 +381,14 @@ where
 
                     Err(Error::Domain(d))
                 }
-                Error::Bug(b) => {
+                Error::Fault(b) => {
                     if let Some(s) = &b.source {
                         if s.is::<S>() {
                             return Err(op(*b.source.unwrap().downcast::<S>().unwrap()).into());
                         }
                     }
 
-                    Err(Error::Bug(b))
+                    Err(Error::Fault(b))
                 }
             },
         }
@@ -399,7 +399,7 @@ where
             Ok(ok) => Ok(ok),
             Err(error) => Err(match error {
                 Error::Domain(explicit_error) => explicit_error.with_context(context).into(),
-                Error::Bug(bug) => bug.with_context(context).into(),
+                Error::Fault(fault) => fault.with_context(context).into(),
             }),
         }
     }
@@ -413,61 +413,61 @@ where
 }
 
 /// To use this trait on [Option] import the prelude `use explicit_error::prelude::*`
-pub trait OptionBug<T> {
-    /// Convert an [Option::None] into a [Result::Err] wrapping a [Bug]
+pub trait OptionFault<T> {
+    /// Convert an [Option::None] into a [Result::Err] wrapping a [Fault]
     /// ```rust
     /// # use std::fs::File;
     /// # use explicit_error_exit::{Error, prelude::*};
     /// fn foo() -> Result<(), Error> {
     ///     let option: Option<u8> = None;
-    ///     option.bug().with_context("Help debugging")?;
+    ///     option.fault().with_context("Help debugging")?;
     ///     # Ok(())
     /// }
     /// ```
-    fn bug(self) -> Result<T, Bug>;
+    fn fault(self) -> Result<T, Fault>;
 
-    /// Convert an [Option::None] into a [Result::Err] wrapping a [Bug] forcing backtrace capture
+    /// Convert an [Option::None] into a [Result::Err] wrapping a [Fault] forcing backtrace capture
     /// ```rust
     /// # use std::fs::File;
     /// # use explicit_error_exit::{Error, prelude::*};
     /// fn foo() -> Result<(), Error> {
     ///     let option: Option<u8> = None;
-    ///     option.bug_force().with_context("Help debugging")?;
+    ///     option.fault_force().with_context("Help debugging")?;
     ///     # Ok(())
     /// }
     /// ```
-    fn bug_force(self) -> Result<T, Bug>;
+    fn fault_force(self) -> Result<T, Fault>;
 }
 
-impl<T> OptionBug<T> for Option<T> {
-    fn bug(self) -> Result<T, Bug> {
+impl<T> OptionFault<T> for Option<T> {
+    fn fault(self) -> Result<T, Fault> {
         match self {
             Some(ok) => Ok(ok),
-            None => Err(Bug::new()),
+            None => Err(Fault::new()),
         }
     }
 
-    fn bug_force(self) -> Result<T, Bug> {
+    fn fault_force(self) -> Result<T, Fault> {
         match self {
             Some(ok) => Ok(ok),
-            None => Err(Bug::new_force()),
+            None => Err(Fault::new_force()),
         }
     }
 }
 
 /// To use this trait on [Result] import the prelude `use explicit_error::prelude::*`
-pub trait ResultBugWithContext<T> {
-    /// Add a context to the [Bug] wrapped in a [Result::Err]
+pub trait ResultFaultWithContext<T> {
+    /// Add a context to the [Fault] wrapped in a [Result::Err]
     /// # Examples
     /// ```rust
-    /// # use explicit_error::{prelude::*, Bug};
-    /// Err::<(), _>(Bug::new()).with_context("Foo bar");
+    /// # use explicit_error::{prelude::*, Fault};
+    /// Err::<(), _>(Fault::new()).with_context("Foo bar");
     /// ```
-    fn with_context(self, context: impl Display) -> Result<T, Bug>;
+    fn with_context(self, context: impl Display) -> Result<T, Fault>;
 }
 
-impl<T> ResultBugWithContext<T> for Result<T, Bug> {
-    fn with_context(self, context: impl Display) -> Result<T, Bug> {
+impl<T> ResultFaultWithContext<T> for Result<T, Fault> {
+    fn with_context(self, context: impl Display) -> Result<T, Fault> {
         match self {
             Ok(ok) => Ok(ok),
             Err(b) => Err(b.with_context(context)),
