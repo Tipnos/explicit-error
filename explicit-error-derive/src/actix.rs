@@ -6,18 +6,6 @@ pub fn derive(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> 
 
     let mut from_impl_generics = input.generics.clone();
     from_impl_generics.params.push(syn::parse_str("EE")?);
-    let explicit_error_http_where = "EE: Into<explicit_error_http::Error>";
-    let from_where_clause = where_clause.map_or(
-        syn::parse_str(&format!("where {explicit_error_http_where}"))?,
-        |w| {
-            let mut c = w.clone();
-
-            c.predicates
-                .push(syn::parse_str(explicit_error_http_where).unwrap());
-
-            c
-        },
-    );
 
     Ok(quote! {
         #[automatically_derived]
@@ -34,9 +22,22 @@ pub fn derive(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> 
         }
 
         #[automatically_derived]
-        impl #from_impl_generics From<EE> for #ident #ty_generics #from_where_clause
-        {
-            fn from(value: EE) -> Self {
+        impl #impl_generics From<explicit_error_http::Bug> for #ident #ty_generics #where_clause {
+            fn from(value: explicit_error_http::Bug) -> Self {
+                <Self as explicit_error_http::HandlerError>::from_error(value.into())
+            }
+        }
+
+        #[automatically_derived]
+        impl #impl_generics From<explicit_error_http::Error> for #ident #ty_generics #where_clause {
+            fn from(value: explicit_error_http::Error) -> Self {
+                <Self as explicit_error_http::HandlerError>::from_error(value)
+            }
+        }
+
+        #[automatically_derived]
+        impl #impl_generics From<explicit_error_http::HttpError> for #ident #ty_generics #where_clause {
+            fn from(value: explicit_error_http::HttpError) -> Self {
                 <Self as explicit_error_http::HandlerError>::from_error(value.into())
             }
         }
