@@ -42,13 +42,17 @@ impl<D> Error<D>
 where
     D: Domain,
 {
+    /// Return true if it's a [Error::Domain] variant
     pub fn is_domain(&self) -> bool {
         matches!(*self, Error::Domain(_))
     }
 
+    /// Return true if it's a [Error::Bug] variant
     pub fn is_bug(&self) -> bool {
         !self.is_domain()
     }
+
+    /// Unwrap the [Error::Domain] variant, panic otherwise
     pub fn unwrap(self) -> D {
         match self {
             Self::Domain(e) => *e,
@@ -56,12 +60,21 @@ where
         }
     }
 
+    /// Unwrap the [Error::Bug] variant, panic otherwise
     pub fn unwrap_bug(self) -> Bug {
         match self {
             Self::Bug(b) => b,
             Self::Domain(e) => {
                 unwrap_failed("called `Error::unwrap_err()` on an `Domain` value", &e)
             }
+        }
+    }
+
+    /// Unwrap the source of either [Error::Domain] or [Error::Bug] variant, panic otherwise
+    pub fn unwrap_source(self) -> Box<dyn StdError + 'static> {
+        match self {
+            Error::Domain(domain) => domain.into_source().unwrap(),
+            Error::Bug(bug) => bug.source.unwrap(),
         }
     }
 }
@@ -309,11 +322,48 @@ where
     /// Err::<(), _>(Bug::new()).with_context("Foo bar");
     /// ```
     fn with_context(self, context: impl Display) -> Result<T, Error<D>>;
+
+    /// Unwrap and downcast the source of either [Error::Domain] or [Error::Bug] variant, panic otherwise.
+    /// Usefull to assert_eq! in tests
+    /// # Examples
+    /// ```rust
+    /// use explicit_error_exit::{ExitError, derive::ExitError, Error};
+    /// # use std::process::ExitCode;
+    /// #[test]
+    /// fn test() {
+    ///     asser_eq!(to_test().unwrap_err_source::<MyError>(), MyError::Foo);
+    /// }
+    ///
+    /// #[derive(ExitError, Debug)]
+    /// enum MyError {
+    ///     Foo,
+    /// }
+    ///
+    /// # impl From<&MyError> for ExitError {
+    /// #     fn from(value: &MyError) -> Self {
+    /// #         match value {
+    /// #             MyError::Foo => ExitError::new(
+    /// #                     "Something went wrong because ..",
+    /// #                     ExitCode::from(42)
+    /// #                 ),
+    /// #         }
+    /// #     }
+    /// # }
+    ///
+    /// fn to_test() -> Result<(), Error> {
+    ///     Err(MyError::Foo)?;
+    ///     Ok(())
+    /// }
+    /// ```
+    fn unwrap_err_source<E>(self) -> E
+    where
+        E: StdError + 'static;
 }
 
 impl<T, D> ResultError<T, D> for Result<T, Error<D>>
 where
     D: Domain,
+    T: std::fmt::Debug,
 {
     fn try_map_on_source<F, S, E>(self, op: F) -> Result<T, Error<D>>
     where
@@ -352,6 +402,13 @@ where
                 Error::Bug(bug) => bug.with_context(context).into(),
             }),
         }
+    }
+
+    fn unwrap_err_source<E>(self) -> E
+    where
+        E: StdError + 'static,
+    {
+        *self.unwrap_err().unwrap_source().downcast::<E>().unwrap()
     }
 }
 
