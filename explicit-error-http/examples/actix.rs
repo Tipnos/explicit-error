@@ -1,6 +1,6 @@
-use actix_web::{App, HttpResponse, HttpServer, get};
+use actix_web::{App, HttpResponse, HttpServer, get, http::StatusCode};
 use env_logger::Env;
-use explicit_error_http::{Bug, Error, HandlerError, derive::HandlerErrorHelpers};
+use explicit_error_http::{Bug, Error, HandlerError, HttpError, derive::HandlerErrorHelpers};
 use log::{debug, error};
 use problem_details::ProblemDetails;
 use serde::Serialize;
@@ -50,6 +50,12 @@ async fn domain_error() -> Result<HttpResponse, MyHandlerError> {
 #[get("/bug")]
 async fn bug_error() -> Result<HttpResponse, MyHandlerError> {
     service::fetch_entity()?;
+
+    Err(HttpError {
+        http_status_code: StatusCode::FORBIDDEN,
+        public: Box::new(""),
+        context: None,
+    })?;
 
     Ok(HttpResponse::Ok().finish())
 }

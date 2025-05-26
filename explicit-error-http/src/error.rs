@@ -171,6 +171,7 @@ pub(crate) struct HttpErrorDisplay<'s> {
 impl<'s> From<&'s HttpError> for HttpErrorDisplay<'s> {
     fn from(value: &'s HttpError) -> Self {
         Self {
+            #[cfg(feature = "actix-web")]
             http_status_code: value.http_status_code,
             public: value.public.as_ref(),
             context: value.context.as_deref(),
