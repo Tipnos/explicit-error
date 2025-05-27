@@ -172,6 +172,23 @@ where
         }
         .downcast_ref::<E>()
     }
+
+    /// Add context of either [Error::Domain] or [Error::Fault] variant.
+    /// Override existing context
+    pub fn with_context(self, context: impl Display) -> Self {
+        match self {
+            Error::Domain(d) => Error::Domain(Box::new(d.with_context(context))),
+            Error::Fault(fault) => Error::Fault(fault.with_context(context)),
+        }
+    }
+
+    /// Return the context of either [Error::Domain] or [Error::Fault] variant.
+    pub fn context(&self) -> Option<&str> {
+        match self {
+            Error::Domain(d) => d.context(),
+            Error::Fault(fault) => fault.context(),
+        }
+    }
 }
 
 pub fn errors_chain_debug(source: &dyn StdError) -> String {

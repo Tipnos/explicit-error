@@ -1,6 +1,9 @@
 use crate::{domain::Domain, error::Error};
 use serde::{Serialize, Serializer};
-use std::{backtrace::Backtrace, error::Error as StdError};
+use std::{
+    backtrace::{Backtrace, BacktraceStatus},
+    error::Error as StdError,
+};
 
 /// Wrapper for errors that should not happen but cannot panic.
 /// It is wrapped in the [Error::Fault] variant.
@@ -166,6 +169,16 @@ impl Fault {
             context: None,
         }
     }
+
+    /// Return the status of the backtrace
+    pub fn backtrace_status(&self) -> BacktraceStatus {
+        self.backtrace.status()
+    }
+
+    /// Return the context
+    pub fn context(&self) -> Option<&str> {
+        self.context.as_deref()
+    }
 }
 
 impl Default for Fault {
@@ -192,3 +205,6 @@ where
 {
     s.serialize_str(&backtrace.to_string())
 }
+
+#[cfg(test)]
+mod test;

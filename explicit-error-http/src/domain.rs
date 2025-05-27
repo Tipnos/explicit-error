@@ -105,6 +105,10 @@ impl Domain for DomainError {
         self.source
     }
 
+    fn context(&self) -> Option<&str> {
+        self.output.context.as_deref()
+    }
+
     fn with_context(mut self, context: impl std::fmt::Display) -> Self {
         self.output = self.output.with_context(context);
         self
