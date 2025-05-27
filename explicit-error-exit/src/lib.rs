@@ -2,7 +2,7 @@
 //! Based on the [explicit-error](explicit_error) crate, its chore tenet is to favor explicitness by inlining the error output while remaining concise.
 //!
 //! The key features are:
-//! - Explicitly mark any error wrapped in a [Result] as a [Bug], a backtrace is captured.
+//! - Explicitly mark any error wrapped in a [Result] as a [Fault], a backtrace is captured.
 //! - Inline transformation of any errors wrapped in a [Result] into an [Error].
 //! - A derive macro [ExitError](derive::ExitError) to easily declare how enum or struct errors transform into an [Error].
 //! - Add context to errors to help debug.
@@ -13,21 +13,21 @@
 //!
 //! ## Inline
 //!
-//! In the body of the function you can explicitly turn errors as exit errors using [ExitError] or marking them as [Bug].
+//! In the body of the function you can explicitly turn errors as exit errors using [ExitError] or marking them as [Fault].
 //! ```rust
-//! use explicit_error_exit::{prelude::*, ExitError, Result, Bug};
+//! use explicit_error_exit::{prelude::*, ExitError, Result, Fault};
 //! use std::process::ExitCode;
 //! // Import the prelude to enable functions on std::result::Result
 //!
 //! fn business_logic() -> Result<()> {
 //!     Err(std::io::Error::new(std::io::ErrorKind::Other, "oh no!"))
-//!         .bug()?;
+//!         .or_fault()?;
 //!     
-//!     // Same behavior as bug() but the error is not captured as a source because it does not implement `[std::error::Error]`
-//!     Err("error message").bug_no_source()?;
+//!     // Same behavior as or_fault() but the error is not captured as a source because it does not implement `[std::error::Error]`
+//!     Err("error message").or_fault_no_source()?;
 //!
 //!     if 1 > 2 {
-//!         Err(Bug::new()
+//!         Err(Fault::new()
 //!             .with_context("Usefull context to help debug."))?;
 //!     }
 //!
@@ -128,7 +128,7 @@ pub type Error = explicit_error::Error<DomainError>;
 pub type Result<T> = std::result::Result<T, Error>;
 
 /// Re-import from [explicit_error] crate.
-pub use explicit_error::Bug;
+pub use explicit_error::Fault;
 
 pub mod prelude {
     pub use crate::ResultDomainWithContext;

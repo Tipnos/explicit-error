@@ -1,12 +1,12 @@
 //! Provide tools to have an explicit and concise error syntax for binary crates.
 //!
 //! To achieve this goal it provides [`explicit_error::Error`](crate::error::Error) an enum to explicitly differentiates
-//! [`Bug`] errors that cannot panic from `Domain` errors that return informative feedbacks
+//! [`Fault`] errors that cannot panic from `Domain` errors that return informative feedbacks
 //! to users. To generate an idiomatic syntax, `explicit-error` also provides traits implemented for [`std::result::Result`]
 //! and [`std::option::Option`] .
 //!
 //! ```rust
-//! use explicit_error_exit::{prelude::*, ExitError, derive::ExitError, Result, Bug};
+//! use explicit_error_exit::{prelude::*, ExitError, derive::ExitError, Result, Fault};
 //! use std::process::ExitCode;
 //! # #[derive(ExitError, Debug)]
 //! # enum MyError {
@@ -23,22 +23,22 @@
 //!
 //! fn business_logic() -> Result<()> {
 //!     let one = Ok::<_, MyError>(())
-//!         .bug()
+//!         .or_fault()
 //!         .with_context("Usefull context to help debug.")?;
 //!
-//!     let two = Some(2).bug()?;
+//!     let two = Some(2).ok_or_fault()?;
 //!
 //!     if 1 < 2 {
 //!         Err(MyError::Foo)?;
 //!     }
 //!     
-//!     Err(MyError::Bar).map_err_or_bug(|e| {
+//!     Err(MyError::Bar).map_err_or_fault(|e| {
 //!         match e {
 //!             MyError::Foo => Ok(ExitError::new(
 //!                 "Informative feedback",
 //!                 ExitCode::FAILURE
 //!             )),
-//!             _ => Err(e) // Convert to a Bug with the original error as its std::error::Error source
+//!             _ => Err(e) // Convert to a Fault with the original error as its std::error::Error source
 //!         }
 //!     })?;
 //!
@@ -75,16 +75,16 @@
 //! To illustrate, below an example from the `explicit-error-http` crate.
 //!
 //! ```rust
-//! # use explicit_error::{Bug, Domain};
+//! # use explicit_error::{Fault, Domain};
 //! pub enum Error<D: Domain> {
 //!     Domain(Box<D>), // Box for size: https://doc.rust-lang.org/clippy/lint_configuration.html#large-error-threshold
-//!     Bug(Bug), // Can be generated from any `Result::Err`, `Option::None` or out of the box
+//!     Fault(Fault), // Can be generated from any `Result::Err`, `Option::None` or out of the box
 //! }
 //! ```
 //!
 //! The chore principle is that the `?` operator can be used on errors in functions
 //! that return a `Result<T, explicit_error::Error<D>>` if they are either:
-//! - marked as `Bug`
+//! - marked as `Fault`
 //! - convertible to D. Usually D represents the error output format.
 //!
 //! For example in the `explicit-error-http` crate, `D` is the type `HttpError`. Any faillible function
@@ -97,7 +97,7 @@
 //! # use actix_web::http::StatusCode;
 //! # use problem_details::ProblemDetails;
 //! # use http::Uri;
-//! # use explicit_error_http::{prelude::*, HttpError, Result, Bug, derive::HttpError};
+//! # use explicit_error_http::{prelude::*, HttpError, Result, Fault, derive::HttpError};
 //! #[derive(HttpError, Debug)]
 //! enum MyError {
 //!     Foo,
@@ -119,7 +119,7 @@
 //! fn business_logic() -> Result<()> {
 //!     // Error from a library that should not happen
 //!     Err(sqlx::Error::RowNotFound)
-//!         .bug()?;
+//!         .or_fault()?;
 //!
 //!     // Application error
 //!     if 1 > 2 {
@@ -164,21 +164,21 @@
 //! Moreover boilerplate and coupling increase (also maintenance cost) because enums have multiple meaningless variants
 //! from a domain point of view:
 //! - encapsulate types from dependencies
-//! - represent stuff that should not happen (aka Bug) and cannot panic.
+//! - represent stuff that should not happen (aka Fault) and cannot panic.
 //!
 //! Finally, it is also painfull to have consistency in error output format and monitoring:
 //! - Without a type to unified errors the implementation are spread
 //! - With one type to unify errors (eg: a big enum called AppError), cohesion is discreased with more boilerplate
-mod bug;
 mod domain;
 mod error;
+mod fault;
 
-pub use bug::*;
 pub use domain::*;
 pub use error::*;
+pub use fault::*;
 
 pub mod prelude {
-    pub use crate::error::{OptionBug, ResultBug, ResultBugWithContext, ResultError};
+    pub use crate::error::{OptionFault, ResultError, ResultFault, ResultFaultWithContext};
 }
 
 fn unwrap_failed(msg: &str, error: &dyn std::fmt::Debug) -> ! {

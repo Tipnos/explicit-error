@@ -33,7 +33,7 @@ use crate::{DomainError, Error};
 /// Domain errors cannot require to be extracted in either a struct or enum variant.
 /// You can generate [Error::Domain](explicit_error::Error::Domain) variant with an [ExitError]
 /// ```rust
-/// use explicit_error_exit::{prelude::*, ExitError, Result, Bug};
+/// use explicit_error_exit::{prelude::*, ExitError, Result, Fault};
 /// use std::process::ExitCode;
 ///
 /// fn business_logic() -> Result<()> {

@@ -3,7 +3,7 @@ use explicit_error::{Domain, Error};
 use serde::{Serialize, Serializer};
 use std::{error::Error as StdError, fmt::Debug};
 
-/// Wrapper for errors that are not a [Bug](explicit_error::Bug). It is used as the [explicit_error::Error::Domain] variant generic type.
+/// Wrapper for errors that are not a [Fault](explicit_error::Fault). It is used as the [explicit_error::Error::Domain] variant generic type.
 ///
 /// It is highly recommended to implement the derive [HttpError](crate::derive::HttpError) which generates the boilerplate
 /// for your domain errors. Otherwise you can implement the [ToDomainError] trait.
@@ -70,7 +70,7 @@ use std::{error::Error as StdError, fmt::Debug};
 /// }
 ///
 /// fn business_logic(public_identifier: &str) -> Result<(), Error> {     
-///     let entity = fetch_bar(&public_identifier).map_err_or_bug(|e|
+///     let entity = fetch_bar(&public_identifier).map_err_or_fault(|e|
 ///         match e {
 ///             sqlx::Error::RowNotFound => Ok(
 ///                 NotFoundError::Bar(public_identifier.to_string())),
@@ -193,8 +193,8 @@ where
     /// Add a context to an error that convert to [Error] wrapped in a [Result::Err]
     /// # Examples
     /// ```rust
-    /// use explicit_error::{prelude::*, Bug};
-    /// Err::<(), _>(Bug::new()).with_context("Foo bar");
+    /// use explicit_error::{prelude::*, Fault};
+    /// Err::<(), _>(Fault::new()).with_context("Foo bar");
     /// ```
     fn with_context(self, context: impl std::fmt::Display) -> std::result::Result<T, DomainError>;
 }

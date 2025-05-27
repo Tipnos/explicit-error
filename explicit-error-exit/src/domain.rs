@@ -2,7 +2,7 @@ use crate::{Error, ExitError};
 use explicit_error::{Domain, Error as ExplicitError};
 use std::{error::Error as StdError, fmt::Display};
 
-/// Wrapper for errors that are not a [Bug](explicit_error::Bug). It is used as the [explicit_error::Error::Domain] variant generic type.
+/// Wrapper for errors that are not a [Fault](explicit_error::Fault). It is used as the [explicit_error::Error::Domain] variant generic type.
 ///
 /// It is highly recommended to implement the derive [ExitError](crate::derive::ExitError) which generates the boilerplate
 /// for your domain errors. Otherwise you can implement the [ToDomainError] trait.
@@ -70,7 +70,7 @@ use std::{error::Error as StdError, fmt::Display};
 /// # }
 ///
 /// fn business_logic() -> Result<()> {   
-///    Err(ErrorKind::Foo).map_err_or_bug(|e|
+///    Err(ErrorKind::Foo).map_err_or_fault(|e|
 ///         match e {
 ///             ErrorKind::Foo => Ok(MyError::Foo),
 ///             _ => Err(e)
@@ -149,8 +149,8 @@ where
     /// Add a context to an error that convert to [Error] wrapped in a [Result::Err]
     /// # Examples
     /// ```rust
-    /// use explicit_error::{prelude::*, Bug};
-    /// Err::<(), _>(Bug::new()).with_context("Foo bar");
+    /// use explicit_error::{prelude::*, Fault};
+    /// Err::<(), _>(Fault::new()).with_context("Foo bar");
     /// ```
     fn with_context(self, context: impl std::fmt::Display) -> std::result::Result<T, DomainError>;
 }

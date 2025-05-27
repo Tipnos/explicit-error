@@ -7,7 +7,7 @@ Built on top of [`explicit-error`](https://crates.io/crates/explicit-error), it 
 Based on the [explicit-error](explicit_error) crate, its chore tenet is to favor explicitness by inlining the error output while remaining concise.
 
 The key features are:
-- Explicitly mark any error wrapped in a [Result] as a [Bug]. A backtrace is captured and a 500 Internal Server HTTP response generated.
+- Explicitly mark any error wrapped in a [Result] as a [Fault]. A backtrace is captured and a 500 Internal Server HTTP response generated.
 - A derive macro [HttpError](derive::HttpError) to easily declare how enum or struct errors transform into an [Error], i.e. defines the generated HTTP response.
 - Inline transformation of any errors wrapped in a [Result] into an [Error].
 - Add context to errors to help debug.
@@ -20,24 +20,24 @@ Usually, it is mostly functions either called by handlers or middlewares.
 
 ### Inline
 
-In the body of the function you can explicitly turn errors into HTTP response using [HttpError] or marking them as [Bug].
+In the body of the function you can explicitly turn errors into HTTP response using [HttpError] or marking them as [Fault].
 
 ```rust
 use actix_web::http::StatusCode;
 use problem_details::ProblemDetails;
 use http::Uri;
-use explicit_error_http::{prelude::*, HttpError, Result, Bug};
+use explicit_error_http::{prelude::*, HttpError, Result, Fault};
 // Import the prelude to enable functions on std::result::Result
 
 fn business_logic() -> Result<()> {
     Err(std::io::Error::new(std::io::ErrorKind::Other, "oh no!"))
-        .bug()?;
+        .or_fault()?;
 
-    // Same behavior as bug() but the error is not captured as a source because it does not implement `[std::error::Error]`
-    Err("error message").bug_no_source()?;
+    // Same behavior as fault() but the error is not captured as a source because it does not implement `[std::error::Error]`
+    Err("error message").or_fault_no_source()?;
 
     if 1 > 2 {
-        Err(Bug::new()
+        Err(Fault::new()
             .with_context("Usefull context to help debug."))?;
     }
 
@@ -152,13 +152,13 @@ impl HandlerError for MyHandlerError {
         MyHandlerError(value)
     }
 
-    // Set-up monitoring and your custom HTTP response body for bugs
-    fn public_bug_response(bug: &Bug) -> impl Serialize {
+    // Set-up monitoring and your custom HTTP response body for faults
+    fn public_fault_response(fault: &Fault) -> impl Serialize {
         #[cfg(debug_assertions)]
-        error!("{bug}");
+        error!("{fault}");
 
         #[cfg(not(debug_assertions))]
-        error!("{}", serde_json::json!(bug));
+        error!("{}", serde_json::json!(faul));
 
         ProblemDetails::new()
             .with_type(http::Uri::from_static("/errors/internal-server-error"))

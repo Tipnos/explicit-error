@@ -3,15 +3,17 @@ use serde::{Serialize, Serializer};
 use std::{backtrace::Backtrace, error::Error as StdError};
 
 /// Wrapper for errors that should not happen but cannot panic.
-/// It is wrapped in the [Error::Bug] variant.
+/// It is wrapped in the [Error::Fault] variant.
 ///
-/// To generate it from predicates use [Bug::new], from [Result] or [Option]
-/// import the prelude and use either [bug()](crate::error::ResultBug::bug),
-/// [bug_no_source()](crate::error::ResultBug::bug_no_source),
-/// [bug_force()](crate::error::ResultBug::bug_force),
-/// [bug_no_source_force()](crate::error::ResultBug::bug_no_source_force)
+/// To generate it from predicates use [Fault::new], from [Result] or [Option]
+/// import the prelude and use either [or_fault()](crate::error::ResultFault::or_fault),
+/// [or_fault_no_source()](crate::error::ResultFault::or_fault_no_source),
+/// [or_fault_force()](crate::error::ResultFault::or_fault_force),
+/// [or_fault_no_source_force()](crate::error::ResultFault::or_fault_no_source_force),
+/// [ok_or_fault()](crate::error::OptionFault::ok_or_fault)
+/// [ok_or_fault_force()](crate::error::OptionFault::ok_or_fault_force)
 #[derive(Debug, Serialize)]
-pub struct Bug {
+pub struct Fault {
     #[serde(serialize_with = "serialize_source")]
     pub source: Option<Box<dyn StdError>>,
     #[serde(serialize_with = "serialize_backtrace")]
@@ -19,22 +21,22 @@ pub struct Bug {
     context: Option<String>,
 }
 
-impl<D> From<Bug> for Error<D>
+impl<D> From<Fault> for Error<D>
 where
     D: Domain,
 {
-    fn from(value: Bug) -> Self {
-        Error::Bug(value)
+    fn from(value: Fault) -> Self {
+        Error::Fault(value)
     }
 }
 
-impl StdError for Bug {
+impl StdError for Fault {
     fn source(&self) -> Option<&(dyn StdError + 'static)> {
         self.source.as_ref().map(|s| s.as_ref())
     }
 }
 
-impl std::fmt::Display for Bug {
+impl std::fmt::Display for Fault {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -60,15 +62,15 @@ impl std::fmt::Display for Bug {
     }
 }
 
-impl Bug {
-    /// Usefull to generate a [Bug] when a predicate is not met.
+impl Fault {
+    /// Usefull to generate a [Fault] when a predicate is not met.
     ///
     /// # Examples
     /// ```rust
-    /// # use explicit_error_http::{Result, Bug};
+    /// # use explicit_error_http::{Result, Fault};
     /// # fn doc() -> Result<()> {
     /// if 1 < 2 {
-    ///     Err(Bug::new())?;
+    ///     Err(Fault::new())?;
     /// }
     /// # Ok(())
     /// # }
@@ -81,12 +83,12 @@ impl Bug {
         }
     }
 
-    /// Add an error source to a [Bug]. Usefull to generate a bug when pattern matching on an error type.
+    /// Add an error source to a [Fault]. Usefull to generate a fault when pattern matching on an error type.
     ///
-    /// On a [Result](std::result::Result) use [map_err_or_bug](crate::ResultBug::map_err_or_bug) to be more concise.
+    /// On a [Result](std::result::Result) use [map_err_or_fault](crate::ResultFault::map_err_or_fault) to be more concise.
     /// # Examples
     /// ```rust
-    /// # use explicit_error_http::{prelude::*, Error, HttpError, Bug, derive::HttpError};
+    /// # use explicit_error_http::{prelude::*, Error, HttpError, Fault, derive::HttpError};
     /// # use problem_details::ProblemDetails;
     /// # use actix_web::http::StatusCode;
     /// # use explicit_error_http::Result;
@@ -94,7 +96,7 @@ impl Bug {
     ///     let sqlx_error = sqlx::Error::RowNotFound;
     ///     Err(match sqlx_error {
     ///         sqlx::Error::RowNotFound => MyEntitysError::NotFound.into(),
-    ///         _ => Bug::new().with_source(sqlx_error).into()
+    ///         _ => Fault::new().with_source(sqlx_error).into()
     ///     })
     /// }
     /// # #[derive(HttpError, Debug)]
@@ -125,14 +127,14 @@ impl Bug {
         }
     }
 
-    /// Add context to a [Bug], override if one was set. The context appears in display
+    /// Add context to a [Fault], override if one was set. The context appears in display
     /// but not in the http response.
     /// # Examples
     /// ```rust
-    /// # use explicit_error_http::{Result, Bug};
+    /// # use explicit_error_http::{Result, Fault};
     /// # fn doc() -> Result<()> {
     /// if 1 < 2 {
-    ///     Err(Bug::new().with_context("Some info to help debug"))?;
+    ///     Err(Fault::new().with_context("Some info to help debug"))?;
     /// }
     /// # Ok(())
     /// # }
@@ -149,10 +151,10 @@ impl Bug {
     ///
     /// # Examples
     /// ```rust
-    /// # use explicit_error_http::{Result, Bug};
+    /// # use explicit_error_http::{Result, Fault};
     /// # fn doc() -> Result<()> {
     /// if 1 < 2 {
-    ///     Err(Bug::new_force())?;
+    ///     Err(Fault::new_force())?;
     /// }
     /// # Ok(())
     /// # }
@@ -166,7 +168,7 @@ impl Bug {
     }
 }
 
-impl Default for Bug {
+impl Default for Fault {
     fn default() -> Self {
         Self::new()
     }

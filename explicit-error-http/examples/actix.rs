@@ -1,6 +1,6 @@
 use actix_web::{App, HttpResponse, HttpServer, get, http::StatusCode};
 use env_logger::Env;
-use explicit_error_http::{Bug, Error, HandlerError, HttpError, derive::HandlerErrorHelpers};
+use explicit_error_http::{Error, Fault, HandlerError, HttpError, derive::HandlerErrorHelpers};
 use log::{debug, error};
 use problem_details::ProblemDetails;
 use serde::Serialize;
@@ -13,12 +13,12 @@ impl HandlerError for MyHandlerError {
         MyHandlerError(value)
     }
 
-    fn public_bug_response(bug: &Bug) -> impl Serialize {
+    fn public_fault_response(fault: &Fault) -> impl Serialize {
         #[cfg(debug_assertions)]
-        error!("{bug}");
+        error!("{fault}");
 
         #[cfg(not(debug_assertions))]
-        error!("{}", serde_json::json!(bug));
+        error!("{}", serde_json::json!(fault));
 
         ProblemDetails::new()
             .with_type(http::Uri::from_static("/errors/internal-server-error"))
@@ -47,8 +47,8 @@ async fn domain_error() -> Result<HttpResponse, MyHandlerError> {
     Ok(HttpResponse::Ok().finish())
 }
 
-#[get("/bug")]
-async fn bug_error() -> Result<HttpResponse, MyHandlerError> {
+#[get("/fault")]
+async fn fault_error() -> Result<HttpResponse, MyHandlerError> {
     service::fetch_entity()?;
 
     Err(HttpError {
@@ -64,7 +64,7 @@ async fn bug_error() -> Result<HttpResponse, MyHandlerError> {
 async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(Env::default().default_filter_or("info"));
 
-    HttpServer::new(|| App::new().service(domain_error).service(bug_error))
+    HttpServer::new(|| App::new().service(domain_error).service(fault_error))
         .bind(("127.0.0.1", 8080))?
         .run()
         .await
@@ -136,7 +136,7 @@ mod service {
             subdomain()?;
         }
 
-        db::fetch_entity().map_err_or_bug(|e| match e {
+        db::fetch_entity().map_err_or_fault(|e| match e {
             sqlx::Error::RowNotFound => Ok(MyDomainError::EntityNotFound("Optimus".to_string())),
             e => Err(e),
         })?;
@@ -146,7 +146,7 @@ mod service {
 
     pub fn fetch_entity() -> Result<()> {
         db::timed_out()
-            .bug()
+            .or_fault()
             .with_context("Usefull info to help debug")?;
 
         Ok(())
