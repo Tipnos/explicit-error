@@ -57,3 +57,73 @@ fn source() {
         &MyError::default()
     );
 }
+
+#[test]
+fn is_domain() {
+    assert!(!Error::Fault(Fault::new()).is_domain());
+    assert!(Error::from(ExitError::new("", ExitCode::SUCCESS)).is_domain());
+}
+
+#[test]
+fn is_fault() {
+    assert!(Error::Fault(Fault::new()).is_fault());
+    assert!(!Error::from(ExitError::new("", ExitCode::SUCCESS)).is_fault());
+}
+
+#[should_panic]
+#[test]
+fn unwrap_panic() {
+    Error::Fault(Fault::new()).unwrap();
+}
+
+#[test]
+fn unwrap() {
+    Error::from(ExitError::new("", ExitCode::SUCCESS)).unwrap();
+}
+
+#[should_panic]
+#[test]
+fn unwrap_fault_panic() {
+    Error::from(ExitError::new("", ExitCode::SUCCESS)).unwrap_fault();
+}
+
+#[test]
+fn unwrap_fault() {
+    Error::Fault(Fault::new()).unwrap_fault();
+}
+
+#[test]
+fn downcast_source() {
+    assert!(
+        Error::Fault(Fault::new())
+            .downcast_source::<Fault>()
+            .is_ok()
+    );
+    assert!(
+        Error::Fault(Fault::new().with_source(MyError::default()))
+            .downcast_source::<MyError>()
+            .is_ok()
+    );
+    assert!(
+        Error::Domain(Box::new(DomainError {
+            output: ExitError::new("", ExitCode::SUCCESS),
+            source: None
+        }))
+        .downcast_source::<DomainError>()
+        .is_ok()
+    );
+    assert!(
+        Error::Domain(Box::new(DomainError {
+            output: ExitError::new("", ExitCode::SUCCESS),
+            source: Some(Box::new(MyError::default()))
+        }))
+        .downcast_source::<MyError>()
+        .is_ok()
+    );
+
+    assert!(
+        Error::Fault(Fault::new())
+            .downcast_source::<MyError>()
+            .is_err()
+    );
+}

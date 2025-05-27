@@ -72,12 +72,105 @@ where
         }
     }
 
-    /// Unwrap the source of either [Error::Domain] or [Error::Fault] variant, panic otherwise
-    pub fn unwrap_source(self) -> Box<dyn StdError + 'static> {
+    /// Try to downcast the source of the type wrapped in either [Error::Domain] or [Error::Fault] variant.
+    /// If it is not set try to downcast the type wrapped.
+    /// Usefull to assert_eq! in tests
+    /// # Examples
+    /// ```rust
+    /// use explicit_error_exit::{ExitError, derive::ExitError, Error};
+    /// # use std::process::ExitCode;
+    /// #[test]
+    /// fn test() {
+    ///     assert_eq!(to_test().unwrap_err().downcast_source::<MyError>().unwrap(), MyError::Foo);
+    /// }
+    ///
+    /// #[derive(ExitError, Debug)]
+    /// enum MyError {
+    ///     Foo,
+    /// }
+    ///
+    /// # impl From<&MyError> for ExitError {
+    /// #     fn from(value: &MyError) -> Self {
+    /// #         match value {
+    /// #             MyError::Foo => ExitError::new(
+    /// #                     "Something went wrong because ..",
+    /// #                     ExitCode::from(42)
+    /// #                 ),
+    /// #         }
+    /// #     }
+    /// # }
+    ///
+    /// fn to_test() -> Result<(), Error> {
+    ///     Err(MyError::Foo)?;
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn downcast_source<E>(self) -> Result<E, Box<dyn std::error::Error + 'static>>
+    where
+        E: StdError + 'static,
+    {
         match self {
-            Error::Domain(domain) => domain.into_source().unwrap(),
-            Error::Fault(fault) => fault.source.unwrap(),
+            Error::Domain(domain) => match domain.source() {
+                Some(_) => domain.into_source().unwrap(),
+                None => domain,
+            },
+            Error::Fault(fault) => match fault.source() {
+                Some(_) => fault.source.unwrap(),
+                None => Box::new(fault),
+            },
         }
+        .downcast::<E>()
+        .map(|o| *o)
+    }
+
+    /// Try to downcast the source of the type wrapped in either [Error::Domain] or [Error::Fault] variant.
+    /// If it is not set try to downcast the type wrapped.
+    /// Usefull to assert_eq! in tests
+    /// # Examples
+    /// ```rust
+    /// use explicit_error_exit::{ExitError, derive::ExitError, Error};
+    /// # use std::process::ExitCode;
+    /// #[test]
+    /// fn test() {
+    ///     assert_eq!(to_test().unwrap_err().downcast_source_ref()::<MyError>().unwrap(), &MyError::Foo);
+    /// }
+    ///
+    /// #[derive(ExitError, Debug)]
+    /// enum MyError {
+    ///     Foo,
+    /// }
+    ///
+    /// # impl From<&MyError> for ExitError {
+    /// #     fn from(value: &MyError) -> Self {
+    /// #         match value {
+    /// #             MyError::Foo => ExitError::new(
+    /// #                     "Something went wrong because ..",
+    /// #                     ExitCode::from(42)
+    /// #                 ),
+    /// #         }
+    /// #     }
+    /// # }
+    ///
+    /// fn to_test() -> Result<(), Error> {
+    ///     Err(MyError::Foo)?;
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn downcast_source_ref<E>(&self) -> Option<&E>
+    where
+        E: StdError + 'static,
+    {
+        match self {
+            Error::Domain(domain) => match domain.source() {
+                Some(_) => domain.source().unwrap(),
+                None => domain as &dyn StdError,
+            },
+            Error::Fault(fault) => match fault.source() {
+                Some(_) => fault.source().unwrap(),
+                None => fault as &dyn StdError,
+            },
+        }
+        .downcast_ref::<E>()
     }
 }
 
@@ -324,42 +417,6 @@ where
     /// Err::<(), _>(Fault::new()).with_context("Foo bar");
     /// ```
     fn with_context(self, context: impl Display) -> Result<T, Error<D>>;
-
-    /// Unwrap and downcast the source of either [Error::Domain] or [Error::Fault] variant, panic otherwise.
-    /// Usefull to assert_eq! in tests
-    /// # Examples
-    /// ```rust
-    /// use explicit_error_exit::{ExitError, derive::ExitError, Error};
-    /// # use std::process::ExitCode;
-    /// #[test]
-    /// fn test() {
-    ///     asser_eq!(to_test().unwrap_err_source::<MyError>(), MyError::Foo);
-    /// }
-    ///
-    /// #[derive(ExitError, Debug)]
-    /// enum MyError {
-    ///     Foo,
-    /// }
-    ///
-    /// # impl From<&MyError> for ExitError {
-    /// #     fn from(value: &MyError) -> Self {
-    /// #         match value {
-    /// #             MyError::Foo => ExitError::new(
-    /// #                     "Something went wrong because ..",
-    /// #                     ExitCode::from(42)
-    /// #                 ),
-    /// #         }
-    /// #     }
-    /// # }
-    ///
-    /// fn to_test() -> Result<(), Error> {
-    ///     Err(MyError::Foo)?;
-    ///     Ok(())
-    /// }
-    /// ```
-    fn unwrap_err_source<E>(self) -> E
-    where
-        E: StdError + 'static;
 }
 
 impl<T, D> ResultError<T, D> for Result<T, Error<D>>
@@ -404,13 +461,6 @@ where
                 Error::Fault(fault) => fault.with_context(context).into(),
             }),
         }
-    }
-
-    fn unwrap_err_source<E>(self) -> E
-    where
-        E: StdError + 'static,
-    {
-        *self.unwrap_err().unwrap_source().downcast::<E>().unwrap()
     }
 }
 
