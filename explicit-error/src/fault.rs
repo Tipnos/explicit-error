@@ -9,7 +9,9 @@ use std::{backtrace::Backtrace, error::Error as StdError};
 /// import the prelude and use either [or_fault()](crate::error::ResultFault::or_fault),
 /// [or_fault_no_source()](crate::error::ResultFault::or_fault_no_source),
 /// [or_fault_force()](crate::error::ResultFault::or_fault_force),
-/// [or_fault_no_source_force()](crate::error::ResultFault::or_fault_no_source_force)
+/// [or_fault_no_source_force()](crate::error::ResultFault::or_fault_no_source_force),
+/// [ok_or_fault()](crate::error::OptionFault::ok_or_fault)
+/// [ok_or_fault_force()](crate::error::OptionFault::ok_or_fault_force)
 #[derive(Debug, Serialize)]
 pub struct Fault {
     #[serde(serialize_with = "serialize_source")]

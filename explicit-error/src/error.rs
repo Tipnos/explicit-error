@@ -414,40 +414,41 @@ where
 
 /// To use this trait on [Option] import the prelude `use explicit_error::prelude::*`
 pub trait OptionFault<T> {
-    /// Convert an [Option::None] into a [Result::Err] wrapping a [Fault]
+    /// Transforms the `Option<T>` into a `Result<T, Fault>`, mapping Some(v) to Ok(v) and None to Err(Fault)
     /// ```rust
     /// # use std::fs::File;
     /// # use explicit_error_exit::{Error, prelude::*};
     /// fn foo() -> Result<(), Error> {
     ///     let option: Option<u8> = None;
-    ///     option.fault().with_context("Help debugging")?;
+    ///     option.ok_or_fault().with_context("Help debugging")?;
     ///     # Ok(())
     /// }
     /// ```
-    fn fault(self) -> Result<T, Fault>;
+    fn ok_or_fault(self) -> Result<T, Fault>;
 
-    /// Convert an [Option::None] into a [Result::Err] wrapping a [Fault] forcing backtrace capture
+    /// Transforms the `Option<T>` into a `Result<T, Fault>`, mapping Some(v) to Ok(v) and None to Err(Fault)
+    /// forcing backtrace capture
     /// ```rust
     /// # use std::fs::File;
     /// # use explicit_error_exit::{Error, prelude::*};
     /// fn foo() -> Result<(), Error> {
     ///     let option: Option<u8> = None;
-    ///     option.fault_force().with_context("Help debugging")?;
+    ///     option.ok_or_fault_force().with_context("Help debugging")?;
     ///     # Ok(())
     /// }
     /// ```
-    fn fault_force(self) -> Result<T, Fault>;
+    fn ok_or_fault_force(self) -> Result<T, Fault>;
 }
 
 impl<T> OptionFault<T> for Option<T> {
-    fn fault(self) -> Result<T, Fault> {
+    fn ok_or_fault(self) -> Result<T, Fault> {
         match self {
             Some(ok) => Ok(ok),
             None => Err(Fault::new()),
         }
     }
 
-    fn fault_force(self) -> Result<T, Fault> {
+    fn ok_or_fault_force(self) -> Result<T, Fault> {
         match self {
             Some(ok) => Ok(ok),
             None => Err(Fault::new_force()),

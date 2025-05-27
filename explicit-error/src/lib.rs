@@ -26,7 +26,7 @@
 //!         .or_fault()
 //!         .with_context("Usefull context to help debug.")?;
 //!
-//!     let two = Some(2).fault()?;
+//!     let two = Some(2).ok_or_fault()?;
 //!
 //!     if 1 < 2 {
 //!         Err(MyError::Foo)?;
