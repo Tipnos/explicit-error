@@ -146,7 +146,7 @@ mod service {
 
     pub fn fetch_entity() -> Result<()> {
         db::timed_out()
-            .fault()
+            .or_fault()
             .with_context("Usefull info to help debug")?;
 
         Ok(())

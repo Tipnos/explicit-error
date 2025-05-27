@@ -21,10 +21,10 @@
 //!
 //! fn business_logic() -> Result<()> {
 //!     Err(std::io::Error::new(std::io::ErrorKind::Other, "oh no!"))
-//!         .fault()?;
+//!         .or_fault()?;
 //!     
-//!     // Same behavior as fault() but the error is not captured as a source because it does not implement `[std::error::Error]`
-//!     Err("error message").fault_no_source()?;
+//!     // Same behavior as or_fault() but the error is not captured as a source because it does not implement `[std::error::Error]`
+//!     Err("error message").or_fault_no_source()?;
 //!
 //!     if 1 > 2 {
 //!         Err(Fault::new()

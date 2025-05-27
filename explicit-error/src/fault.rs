@@ -6,10 +6,10 @@ use std::{backtrace::Backtrace, error::Error as StdError};
 /// It is wrapped in the [Error::Fault] variant.
 ///
 /// To generate it from predicates use [Fault::new], from [Result] or [Option]
-/// import the prelude and use either [fault()](crate::error::ResultFault::fault),
-/// [fault_no_source()](crate::error::ResultFault::fault_no_source),
-/// [fault_force()](crate::error::ResultFault::fault_force),
-/// [bug_no_source_force()](crate::error::ResultFault::fault_no_source_force)
+/// import the prelude and use either [or_fault()](crate::error::ResultFault::or_fault),
+/// [or_fault_no_source()](crate::error::ResultFault::or_fault_no_source),
+/// [or_fault_force()](crate::error::ResultFault::or_fault_force),
+/// [or_fault_no_source_force()](crate::error::ResultFault::or_fault_no_source_force)
 #[derive(Debug, Serialize)]
 pub struct Fault {
     #[serde(serialize_with = "serialize_source")]

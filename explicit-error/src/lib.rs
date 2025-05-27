@@ -23,7 +23,7 @@
 //!
 //! fn business_logic() -> Result<()> {
 //!     let one = Ok::<_, MyError>(())
-//!         .fault()
+//!         .or_fault()
 //!         .with_context("Usefull context to help debug.")?;
 //!
 //!     let two = Some(2).fault()?;
@@ -119,7 +119,7 @@
 //! fn business_logic() -> Result<()> {
 //!     // Error from a library that should not happen
 //!     Err(sqlx::Error::RowNotFound)
-//!         .fault()?;
+//!         .or_fault()?;
 //!
 //!     // Application error
 //!     if 1 > 2 {

@@ -146,19 +146,19 @@ pub trait ResultFault<T, S> {
         D: Domain;
 
     /// Convert any [Result::Err] into a [Result::Err] wrapping a [Fault]
-    /// Use [fault](ResultFault::fault) instead if the error implements [std::error::Error]
+    /// Use [fault](ResultFault::or_fault) instead if the error implements [std::error::Error]
     ///  ```rust
     /// # use std::fs::File;
     /// # use explicit_error_exit::{Error, prelude::*};
     /// fn foo() -> Result<(), Error> {
     ///     let file: Result<File, std::io::Error> = File::open("foo.conf");
-    ///     file.fault_no_source().with_context("Configuration file foo.conf is missing.")?;
+    ///     file.or_fault_no_source().with_context("Configuration file foo.conf is missing.")?;
     ///
-    ///     Err("error message").fault_no_source()?;
+    ///     Err("error message").or_fault_no_source()?;
     ///     # Ok(())
     /// }
     /// ```
-    fn fault_no_source(self) -> Result<T, Fault>;
+    fn or_fault_no_source(self) -> Result<T, Fault>;
 
     /// Convert any [Result::Err] wrapping an error that implements
     /// [std::error::Error] into a [Result::Err] wrapping a [Fault]
@@ -167,27 +167,27 @@ pub trait ResultFault<T, S> {
     /// # use explicit_error_exit::{Error, prelude::*};
     /// fn foo() -> Result<(), Error> {
     ///     Err(sqlx::Error::RowNotFound)
-    ///         .fault()
+    ///         .or_fault()
     ///         .with_context("Configuration file foo.conf is missing.")?;
     ///     # Ok(())
     /// }
     /// ```
-    fn fault(self) -> Result<T, Fault>
+    fn or_fault(self) -> Result<T, Fault>
     where
         S: StdError + 'static;
 
     /// Convert any [Result::Err] into a [Result::Err] wrapping a [Fault] forcing backtrace capture
-    /// Use [fault_force](ResultFault::fault_force) instead if the error implements [std::error::Error]
+    /// Use [or_fault_force](ResultFault::or_fault_force) instead if the error implements [std::error::Error]
     ///  ```rust
     /// # use std::fs::File;
     /// # use explicit_error_exit::{Error, prelude::*};
     /// fn foo() -> Result<(), Error> {
     ///     let file: Result<File, std::io::Error> = File::open("foo.conf");
-    ///     file.fault_force().with_context("Configuration file foo.conf is missing.")?;
+    ///     file.or_fault_force().with_context("Configuration file foo.conf is missing.")?;
     ///     # Ok(())
     /// }
     /// ```
-    fn fault_no_source_force(self) -> Result<T, Fault>;
+    fn or_fault_no_source_force(self) -> Result<T, Fault>;
 
     /// Convert any [Result::Err] wrapping an error that implements
     /// [std::error::Error] into a [Result::Err] wrapping a [Fault] forcing backtrace capture
@@ -196,12 +196,12 @@ pub trait ResultFault<T, S> {
     /// # use explicit_error_exit::{Error, prelude::*};
     /// fn foo() -> Result<(), Error> {
     ///     Err(sqlx::Error::RowNotFound)
-    ///         .fault_force()
+    ///         .or_fault_force()
     ///         .with_context("Configuration file foo.conf is missing.")?;
     ///     # Ok(())
     /// }
     /// ```
-    fn fault_force(self) -> Result<T, Fault>
+    fn or_fault_force(self) -> Result<T, Fault>
     where
         S: StdError + 'static;
 }
@@ -223,21 +223,21 @@ impl<T, S> ResultFault<T, S> for Result<T, S> {
         }
     }
 
-    fn fault_no_source(self) -> Result<T, Fault> {
+    fn or_fault_no_source(self) -> Result<T, Fault> {
         match self {
             Ok(ok) => Ok(ok),
             Err(_) => Err(Fault::new()),
         }
     }
 
-    fn fault_no_source_force(self) -> Result<T, Fault> {
+    fn or_fault_no_source_force(self) -> Result<T, Fault> {
         match self {
             Ok(ok) => Ok(ok),
             Err(_) => Err(Fault::new_force()),
         }
     }
 
-    fn fault(self) -> Result<T, Fault>
+    fn or_fault(self) -> Result<T, Fault>
     where
         S: StdError + 'static,
     {
@@ -247,7 +247,7 @@ impl<T, S> ResultFault<T, S> for Result<T, S> {
         }
     }
 
-    fn fault_force(self) -> Result<T, Fault>
+    fn or_fault_force(self) -> Result<T, Fault>
     where
         S: StdError + 'static,
     {
