@@ -20,8 +20,10 @@ where
 {
     fn source(&self) -> Option<&(dyn StdError + 'static)> {
         match self {
-            Error::Domain(explicit_error) => Some(explicit_error.as_ref()),
-            Error::Fault(fault) => fault.source.as_ref().map(|e| e.as_ref()),
+            Error::Domain(explicit_error) => {
+                explicit_error.source().or(Some(explicit_error.as_ref()))
+            }
+            Error::Fault(fault) => fault.source().or(Some(fault)),
         }
     }
 }
@@ -475,3 +477,6 @@ impl<T> ResultFaultWithContext<T> for Result<T, Fault> {
         }
     }
 }
+
+#[cfg(test)]
+mod test;
