@@ -5,7 +5,7 @@ extern crate syn;
 
 #[cfg(feature = "actix-web")]
 mod actix;
-#[cfg(any(feature = "exit", feature = "actix-web"))]
+#[cfg(any(feature = "exit", feature = "http"))]
 mod domain;
 
 #[cfg(any(feature = "http", feature = "exit", feature = "actix-web"))]

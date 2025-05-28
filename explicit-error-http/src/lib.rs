@@ -223,6 +223,7 @@ pub mod prelude {
 }
 
 pub mod derive {
+    #[cfg(feature = "actix-web")]
     pub use explicit_error_derive::HandlerErrorHelpers;
     pub use explicit_error_derive::HttpError;
 }

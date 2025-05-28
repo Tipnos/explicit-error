@@ -53,8 +53,14 @@ fn http_error() {
             .is_some()
     );
 
+    #[cfg(feature = "actix-web")]
     assert_eq!(
         error.to_string(),
         r#"{"context":"context","http_status_code":400,"public":{"bar":42,"foo":"foo"},"source":"MyDomainError"}"#
+    );
+
+    assert_eq!(
+        error.to_string(),
+        r#"{"context":"context","public":{"bar":42,"foo":"foo"},"source":"MyDomainError"}"#
     );
 }

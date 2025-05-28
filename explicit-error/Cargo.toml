@@ -16,7 +16,7 @@ serde = {version = "1.0.219", features = ["derive"]}
 [dev-dependencies]
 actix-web = "4.10.2"
 explicit-error-exit = {path = "../explicit-error-exit"}
-explicit-error-http = {path = "../explicit-error-http"}
+explicit-error-http = {path = "../explicit-error-http", features = ["actix-web"]}
 http = "1.3.1"
 problem_details = "0.8.0"
 sqlx = "0.8.3"

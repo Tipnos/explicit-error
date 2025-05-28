@@ -1,4 +1,5 @@
 use super::*;
+#[cfg(feature = "actix-web")]
 use actix_web::http::StatusCode;
 
 #[derive(Serialize)]
@@ -178,23 +179,31 @@ fn serialize() {
 
 #[test]
 fn display() {
+    let domain = DomainError {
+        output: HttpError {
+            #[cfg(feature = "actix-web")]
+            http_status_code: actix_web::http::StatusCode::BAD_REQUEST,
+            public: Box::new(ErrorBody {
+                foo: "foo",
+                bar: 42,
+            }),
+            context: Some("context".to_string()),
+        },
+        source: Some(Box::new(sqlx::Error::PoolClosed)),
+    }
+    .to_string();
+
+    #[cfg(feature = "actix-web")]
     assert_eq!(
-        format!(
-            "{}",
-            DomainError {
-                output: HttpError {
-                    #[cfg(feature = "actix-web")]
-                    http_status_code: actix_web::http::StatusCode::BAD_REQUEST,
-                    public: Box::new(ErrorBody {
-                        foo: "foo",
-                        bar: 42
-                    }),
-                    context: Some("context".to_string())
-                },
-                source: Some(Box::new(sqlx::Error::PoolClosed))
-            }
-        ),
+            domain,
         r#"{"context":"context","http_status_code":400,"public":{"bar":42,"foo":"foo"},"source":"PoolClosed"}"#
+            .to_string()
+    );
+
+    #[cfg(not(feature = "actix-web"))]
+    assert_eq!(
+        domain,
+        r#"{"context":"context","public":{"bar":42,"foo":"foo"},"source":"PoolClosed"}"#
             .to_string()
     );
 }
@@ -257,9 +266,16 @@ fn to_domain_error() {
             .is_some()
     );
 
+    #[cfg(feature = "actix-web")]
     assert_eq!(
         domain_error.to_string(),
         r#"{"context":"context","http_status_code":400,"public":{"bar":42,"foo":"foo"},"source":"MyDomainError"}"#
+    );
+
+    #[cfg(not(feature = "actix-web"))]
+    assert_eq!(
+        domain_error.to_string(),
+        r#"{"context":"context","public":{"bar":42,"foo":"foo"},"source":"MyDomainError"}"#
     );
 }
 
@@ -290,8 +306,15 @@ fn result_domain_with_context() {
             .is_some()
     );
 
+    #[cfg(feature = "actix-web")]
     assert_eq!(
         domain_error.to_string(),
         r#"{"context":"context 2","http_status_code":400,"public":{"bar":42,"foo":"foo"},"source":"MyDomainError"}"#
+    );
+
+    #[cfg(not(feature = "actix-web"))]
+    assert_eq!(
+        domain_error.to_string(),
+        r#"{"context":"context 2","public":{"bar":42,"foo":"foo"},"source":"MyDomainError"}"#
     );
 }

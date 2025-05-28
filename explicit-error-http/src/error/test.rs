@@ -1,4 +1,5 @@
 use super::*;
+#[cfg(feature = "actix-web")]
 use actix_web::http::StatusCode;
 
 #[derive(Serialize)]
@@ -90,20 +91,27 @@ fn serialize() {
 
 #[test]
 fn display() {
+    let error = HttpError {
+        #[cfg(feature = "actix-web")]
+        http_status_code: StatusCode::BAD_REQUEST,
+        public: Box::new(ErrorBody {
+            foo: "foo",
+            bar: 42,
+        }),
+        context: Some("context".to_string()),
+    }
+    .to_string();
+
+    #[cfg(feature = "actix-web")]
     assert_eq!(
-        format!(
-            "{}",
-            HttpError {
-                #[cfg(feature = "actix-web")]
-                http_status_code: StatusCode::BAD_REQUEST,
-                public: Box::new(ErrorBody {
-                    foo: "foo",
-                    bar: 42
-                }),
-                context: Some("context".to_string())
-            }
-        ),
+        error,
         r#"{"context":"context","http_status_code":400,"public":{"bar":42,"foo":"foo"}}"#
             .to_string()
+    );
+
+    #[cfg(not(feature = "actix-web"))]
+    assert_eq!(
+        error,
+        r#"{"context":"context","public":{"bar":42,"foo":"foo"}}"#.to_string()
     );
 }
