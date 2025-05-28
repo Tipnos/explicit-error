@@ -8,10 +8,10 @@ pub fn derive(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> 
         #[automatically_derived]
         impl #impl_generics actix_web::ResponseError for #ident #ty_generics #where_clause {
             fn error_response(&self) -> actix_web::HttpResponse {
-                match self.error() {
+                match <Self as explicit_error_http::HandlerError>::error(self) {
                     explicit_error_http::Error::Domain(d) => {
                         let status_code = d.output.http_status_code;
-                        actix_web::HttpResponse::build(status_code).json(<Self as HandlerError>::domain_response(d))
+                        actix_web::HttpResponse::build(status_code).json(<Self as explicit_error_http::HandlerError>::domain_response(d))
                     },
                     explicit_error_http::Error::Fault(b) => actix_web::HttpResponse::InternalServerError().json(<Self as explicit_error_http::HandlerError>::public_fault_response(b)),
                 }
@@ -42,14 +42,14 @@ pub fn derive(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> 
         #[automatically_derived]
         impl #impl_generics std::fmt::Display for #ident #ty_generics #where_clause {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                std::fmt::Display::fmt(self.error(), f)
+                std::fmt::Display::fmt(<Self as explicit_error_http::HandlerError>::error(self), f)
             }
         }
 
         #[automatically_derived]
         impl #impl_generics std::fmt::Debug for #ident #ty_generics #where_clause {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                std::fmt::Debug::fmt(self.error(), f)
+                std::fmt::Debug::fmt(<Self as explicit_error_http::HandlerError>::error(self), f)
             }
         }
     })
