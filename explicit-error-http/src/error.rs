@@ -159,6 +159,23 @@ impl From<HttpError> for Error {
     }
 }
 
+#[cfg(feature = "actix-web")]
+impl PartialEq for HttpError {
+    fn eq(&self, other: &Self) -> bool {
+        self.context == other.context
+            && self.http_status_code == other.http_status_code
+            && serde_json::json!(self.public).to_string() == serde_json::json!(other).to_string()
+    }
+}
+
+#[cfg(not(feature = "actix-web"))]
+impl PartialEq for HttpError {
+    fn eq(&self, other: &Self) -> bool {
+        self.context == other.context
+            && serde_json::json!(self.public).to_string() == serde_json::json!(other).to_string()
+    }
+}
+
 #[derive(Serialize)]
 pub(crate) struct HttpErrorDisplay<'s> {
     #[cfg(feature = "actix-web")]

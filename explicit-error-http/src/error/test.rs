@@ -46,7 +46,7 @@ fn with_context() {
 
 #[test]
 fn from_http_error_for_error() {
-    let error = crate::Error::from(HttpError {
+    let domain_error = crate::Error::from(HttpError {
         #[cfg(feature = "actix-web")]
         http_status_code: StatusCode::BAD_REQUEST,
         public: Box::new(ErrorBody {
@@ -56,14 +56,19 @@ fn from_http_error_for_error() {
         context: None,
     })
     .unwrap();
-
-    assert_eq!(error.output.context, None);
-    #[cfg(feature = "actix-web")]
-    assert_eq!(error.output.http_status_code, StatusCode::BAD_REQUEST);
     assert_eq!(
-        serde_json::json!(error.output).to_string(),
-        r#"{"bar":42,"foo":"foo"}"#
+        HttpError {
+            #[cfg(feature = "actix-web")]
+            http_status_code: StatusCode::BAD_REQUEST,
+            public: Box::new(ErrorBody {
+                foo: "foo",
+                bar: 42,
+            }),
+            context: None,
+        },
+        domain_error.output
     );
+    assert!(domain_error.source.is_none());
 }
 
 #[test]
