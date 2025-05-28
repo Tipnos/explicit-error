@@ -164,15 +164,14 @@ impl PartialEq for HttpError {
     fn eq(&self, other: &Self) -> bool {
         self.context == other.context
             && self.http_status_code == other.http_status_code
-            && serde_json::json!(self.public).to_string() == serde_json::json!(other).to_string()
+            && serde_json::json!(self.public) == serde_json::json!(other)
     }
 }
 
 #[cfg(not(feature = "actix-web"))]
 impl PartialEq for HttpError {
     fn eq(&self, other: &Self) -> bool {
-        self.context == other.context
-            && serde_json::json!(self.public).to_string() == serde_json::json!(other).to_string()
+        self.context == other.context && serde_json::json!(self.public) == serde_json::json!(other)
     }
 }
 
