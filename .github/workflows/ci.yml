@@ -36,7 +36,7 @@ jobs:
     - name: Run tests
       run: just test
     - name: Doc
-      run: cargo doc
+      run: cargo doc --all-features
     - name: Publish dry run
       run: |
         cargo publish -p explicit-error --dry-run
