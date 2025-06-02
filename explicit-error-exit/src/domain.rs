@@ -89,7 +89,7 @@ use std::{error::Error as StdError, fmt::Display};
 #[derive(Debug)]
 pub struct DomainError {
     pub output: ExitError,
-    pub source: Option<Box<dyn StdError>>,
+    pub source: Option<Box<dyn StdError + Send + Sync>>,
 }
 
 impl Display for DomainError {
@@ -100,7 +100,7 @@ impl Display for DomainError {
 
 impl StdError for DomainError {
     fn source(&self) -> Option<&(dyn StdError + 'static)> {
-        self.source.as_ref().map(|o| o.as_ref())
+        self.source.as_deref().map(|o| o as _)
     }
 }
 
@@ -111,7 +111,7 @@ impl From<DomainError> for ExplicitError<DomainError> {
 }
 
 impl Domain for DomainError {
-    fn into_source(self) -> Option<Box<dyn std::error::Error>> {
+    fn into_source(self) -> Option<Box<dyn std::error::Error + Send + Sync>> {
         self.source
     }
 
@@ -128,7 +128,7 @@ impl Domain for DomainError {
 /// Internally used by [ExitError](crate::derive::ExitError) derive.
 pub trait ToDomainError
 where
-    Self: StdError + 'static + Into<Error>,
+    Self: StdError + 'static + Into<Error> + Send + Sync,
     for<'a> &'a Self: Into<ExitError>,
 {
     fn to_domain_error(self) -> DomainError {

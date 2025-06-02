@@ -18,7 +18,7 @@ use std::{
 #[derive(Debug, Serialize)]
 pub struct Fault {
     #[serde(serialize_with = "serialize_source")]
-    pub source: Option<Box<dyn StdError>>,
+    pub source: Option<Box<dyn StdError + Send + Sync>>,
     #[serde(serialize_with = "serialize_backtrace")]
     backtrace: Backtrace,
     context: Option<String>,
@@ -35,7 +35,7 @@ where
 
 impl StdError for Fault {
     fn source(&self) -> Option<&(dyn StdError + 'static)> {
-        self.source.as_ref().map(|s| s.as_ref())
+        self.source.as_deref().map(|s| s as _)
     }
 }
 
@@ -122,7 +122,7 @@ impl Fault {
     /// #     }
     /// # }
     /// ```
-    pub fn with_source<E: StdError + 'static>(self, error: E) -> Self {
+    pub fn with_source<E: StdError + 'static + Send + Sync>(self, error: E) -> Self {
         Self {
             source: Some(Box::new(error)),
             backtrace: self.backtrace,
@@ -187,7 +187,10 @@ impl Default for Fault {
     }
 }
 
-fn serialize_source<S>(source: &Option<Box<dyn StdError>>, s: S) -> Result<S::Ok, S::Error>
+fn serialize_source<S>(
+    source: &Option<Box<dyn StdError + Send + Sync>>,
+    s: S,
+) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
 {

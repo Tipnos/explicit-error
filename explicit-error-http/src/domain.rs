@@ -97,11 +97,11 @@ pub struct DomainError {
     #[serde(flatten)]
     pub output: HttpError,
     #[serde(skip)]
-    pub source: Option<Box<dyn StdError>>,
+    pub source: Option<Box<dyn StdError + Send + Sync>>,
 }
 
 impl Domain for DomainError {
-    fn into_source(self) -> Option<Box<dyn std::error::Error>> {
+    fn into_source(self) -> Option<Box<dyn std::error::Error + Send + Sync>> {
         self.source
     }
 
@@ -123,7 +123,7 @@ impl From<DomainError> for Error<DomainError> {
 
 impl StdError for DomainError {
     fn source(&self) -> Option<&(dyn StdError + 'static)> {
-        self.source.as_ref().map(|o| o.as_ref())
+        self.source.as_deref().map(|o| o as _)
     }
 }
 
@@ -132,7 +132,7 @@ struct DomainErrorDisplay<'s> {
     #[serde(flatten)]
     output: HttpErrorDisplay<'s>,
     #[serde(serialize_with = "serialize_option_source_dyn")]
-    pub source: Option<&'s dyn StdError>,
+    pub source: Option<&'s (dyn StdError + 's + Send + Sync)>,
 }
 
 impl<'s> From<&'s DomainError> for DomainErrorDisplay<'s> {
@@ -157,7 +157,7 @@ impl std::fmt::Display for DomainError {
 /// Internally used by [HttpError](crate::derive::HttpError) derive.
 pub trait ToDomainError
 where
-    Self: Sized + StdError + 'static + Into<Error<DomainError>>,
+    Self: Sized + StdError + 'static + Into<Error<DomainError>> + Send + Sync,
     for<'a> &'a Self: Into<HttpError>,
 {
     fn to_domain_error(self) -> DomainError {
@@ -223,7 +223,10 @@ where
     s.serialize_str(&explicit_error::errors_chain_debug(source))
 }
 
-fn serialize_option_source_dyn<S>(source: &Option<&dyn StdError>, s: S) -> Result<S::Ok, S::Error>
+fn serialize_option_source_dyn<S>(
+    source: &Option<&(dyn StdError + Send + Sync)>,
+    s: S,
+) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
 {
