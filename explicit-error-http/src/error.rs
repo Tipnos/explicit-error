@@ -85,7 +85,7 @@ pub struct HttpError {
     #[serde(skip)]
     pub http_status_code: actix_web::http::StatusCode,
     #[serde(flatten)]
-    pub public: Box<dyn DynSerialize>,
+    pub public: Box<dyn DynSerialize + Send + Sync>,
     #[serde(skip)]
     pub context: Option<String>,
 }
@@ -109,7 +109,7 @@ impl HttpError {
     /// }
     /// ```
     #[cfg(feature = "actix-web")]
-    pub fn new<S: Serialize + 'static>(
+    pub fn new<S: Serialize + 'static + Send + Sync>(
         http_status_code: actix_web::http::StatusCode,
         public: S,
     ) -> Self {

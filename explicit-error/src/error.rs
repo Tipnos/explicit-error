@@ -105,7 +105,7 @@ where
     ///     Ok(())
     /// }
     /// ```
-    pub fn downcast_source<E>(self) -> Result<E, Box<dyn std::error::Error + 'static>>
+    pub fn downcast_source<E>(self) -> Result<E, Box<dyn std::error::Error + 'static + Send + Sync>>
     where
         E: StdError + 'static,
     {
@@ -254,7 +254,7 @@ pub trait ResultFault<T, S> {
     where
         F: FnOnce(S) -> Result<E, S>,
         E: Into<Error<D>>,
-        S: StdError + 'static,
+        S: StdError + 'static + Send + Sync,
         D: Domain;
 
     /// Convert any [Result::Err] into a [Result::Err] wrapping a [Fault]
@@ -286,7 +286,7 @@ pub trait ResultFault<T, S> {
     /// ```
     fn or_fault(self) -> Result<T, Fault>
     where
-        S: StdError + 'static;
+        S: StdError + 'static + Send + Sync;
 
     /// Convert any [Result::Err] into a [Result::Err] wrapping a [Fault] forcing backtrace capture
     /// Use [or_fault_force](ResultFault::or_fault_force) instead if the error implements [std::error::Error]
@@ -315,7 +315,7 @@ pub trait ResultFault<T, S> {
     /// ```
     fn or_fault_force(self) -> Result<T, Fault>
     where
-        S: StdError + 'static;
+        S: StdError + 'static + Send + Sync;
 }
 
 impl<T, S> ResultFault<T, S> for Result<T, S> {
@@ -323,7 +323,7 @@ impl<T, S> ResultFault<T, S> for Result<T, S> {
     where
         F: FnOnce(S) -> Result<E, S>,
         E: Into<Error<D>>,
-        S: StdError + 'static,
+        S: StdError + 'static + Send + Sync,
         D: Domain,
     {
         match self {
@@ -351,7 +351,7 @@ impl<T, S> ResultFault<T, S> for Result<T, S> {
 
     fn or_fault(self) -> Result<T, Fault>
     where
-        S: StdError + 'static,
+        S: StdError + 'static + Send + Sync,
     {
         match self {
             Ok(ok) => Ok(ok),
@@ -361,7 +361,7 @@ impl<T, S> ResultFault<T, S> for Result<T, S> {
 
     fn or_fault_force(self) -> Result<T, Fault>
     where
-        S: StdError + 'static,
+        S: StdError + 'static + Send + Sync,
     {
         match self {
             Ok(ok) => Ok(ok),
