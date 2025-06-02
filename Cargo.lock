@@ -650,7 +650,7 @@ dependencies = [
 
 [[package]]
 name = "explicit-error"
-version = "0.1.6"
+version = "0.2.0"
 dependencies = [
  "actix-web",
  "explicit-error-exit",
@@ -672,7 +672,7 @@ dependencies = [
 
 [[package]]
 name = "explicit-error-exit"
-version = "0.1.4"
+version = "0.2.0"
 dependencies = [
  "explicit-error",
  "explicit-error-derive",
@@ -680,7 +680,7 @@ dependencies = [
 
 [[package]]
 name = "explicit-error-http"
-version = "0.1.6"
+version = "0.2.0"
 dependencies = [
  "actix-web",
  "env_logger",
