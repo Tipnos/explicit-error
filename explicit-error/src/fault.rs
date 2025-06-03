@@ -1,4 +1,4 @@
-use crate::{domain::Domain, error::Error};
+use crate::error::Error;
 use serde::{Serialize, Serializer};
 use std::{
     backtrace::{Backtrace, BacktraceStatus},
@@ -24,10 +24,7 @@ pub struct Fault {
     context: Option<String>,
 }
 
-impl<D> From<Fault> for Error<D>
-where
-    D: Domain,
-{
+impl<D> From<Fault> for Error<D> {
     fn from(value: Fault) -> Self {
         Error::Fault(value)
     }
