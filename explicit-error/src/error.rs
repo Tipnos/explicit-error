@@ -9,7 +9,7 @@ use std::{error::Error as StdError, fmt::Display};
 /// The [Error::Domain] variant is for domain errors that provide feedbacks to the user.
 /// For library or functions that require the caller to pattern match on the returned error, a dedicated type is prefered.
 #[derive(Debug)]
-pub enum Error<D: Domain> {
+pub enum Error<D> {
     Domain(Box<D>), // Box for size: https://doc.rust-lang.org/clippy/lint_configuration.html#large-error-threshold
     Fault(Fault),
 }
