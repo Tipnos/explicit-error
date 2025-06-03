@@ -16,7 +16,7 @@ pub enum Error<D> {
 
 impl<D> StdError for Error<D>
 where
-    D: Domain,
+    D: StdError + 'static,
 {
     fn source(&self) -> Option<&(dyn StdError + 'static)> {
         match self {
@@ -30,7 +30,7 @@ where
 
 impl<D> Display for Error<D>
 where
-    D: Domain,
+    D: StdError,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -42,7 +42,7 @@ where
 
 impl<D> Error<D>
 where
-    D: Domain,
+    D: StdError + 'static,
 {
     /// Return true if it's a [Error::Domain] variant
     pub fn is_domain(&self) -> bool {
@@ -70,57 +70,6 @@ where
                 unwrap_failed("called `Error::unwrap_err()` on an `Domain` value", &e)
             }
         }
-    }
-
-    /// Try to downcast the source of the type wrapped in either [Error::Domain] or [Error::Fault] variant.
-    /// If it is not set try to downcast the type wrapped.
-    /// Usefull to assert_eq! in tests
-    /// # Examples
-    /// ```rust
-    /// use explicit_error_exit::{ExitError, derive::ExitError, Error};
-    /// # use std::process::ExitCode;
-    /// #[test]
-    /// fn test() {
-    ///     assert_eq!(to_test().unwrap_err().downcast_source::<MyError>().unwrap(), MyError::Foo);
-    /// }
-    ///
-    /// #[derive(ExitError, Debug)]
-    /// enum MyError {
-    ///     Foo,
-    /// }
-    ///
-    /// # impl From<&MyError> for ExitError {
-    /// #     fn from(value: &MyError) -> Self {
-    /// #         match value {
-    /// #             MyError::Foo => ExitError::new(
-    /// #                     "Something went wrong because ..",
-    /// #                     ExitCode::from(42)
-    /// #                 ),
-    /// #         }
-    /// #     }
-    /// # }
-    ///
-    /// fn to_test() -> Result<(), Error> {
-    ///     Err(MyError::Foo)?;
-    ///     Ok(())
-    /// }
-    /// ```
-    pub fn downcast_source<E>(self) -> Result<E, Box<dyn std::error::Error + 'static + Send + Sync>>
-    where
-        E: StdError + 'static,
-    {
-        match self {
-            Error::Domain(domain) => match domain.source() {
-                Some(_) => domain.into_source().unwrap(),
-                None => domain,
-            },
-            Error::Fault(fault) => match fault.source() {
-                Some(_) => fault.source.unwrap(),
-                None => Box::new(fault),
-            },
-        }
-        .downcast::<E>()
-        .map(|o| *o)
     }
 
     /// Try to downcast the source of the type wrapped in either [Error::Domain] or [Error::Fault] variant.
@@ -171,6 +120,62 @@ where
             },
         }
         .downcast_ref::<E>()
+    }
+}
+
+impl<D> Error<D>
+where
+    D: Domain,
+{
+    /// Try to downcast the source of the type wrapped in either [Error::Domain] or [Error::Fault] variant.
+    /// If it is not set try to downcast the type wrapped.
+    /// Usefull to assert_eq! in tests
+    /// # Examples
+    /// ```rust
+    /// use explicit_error_exit::{ExitError, derive::ExitError, Error};
+    /// # use std::process::ExitCode;
+    /// #[test]
+    /// fn test() {
+    ///     assert_eq!(to_test().unwrap_err().downcast_source::<MyError>().unwrap(), MyError::Foo);
+    /// }
+    ///
+    /// #[derive(ExitError, Debug)]
+    /// enum MyError {
+    ///     Foo,
+    /// }
+    ///
+    /// # impl From<&MyError> for ExitError {
+    /// #     fn from(value: &MyError) -> Self {
+    /// #         match value {
+    /// #             MyError::Foo => ExitError::new(
+    /// #                     "Something went wrong because ..",
+    /// #                     ExitCode::from(42)
+    /// #                 ),
+    /// #         }
+    /// #     }
+    /// # }
+    ///
+    /// fn to_test() -> Result<(), Error> {
+    ///     Err(MyError::Foo)?;
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn downcast_source<E>(self) -> Result<E, Box<dyn std::error::Error + 'static + Send + Sync>>
+    where
+        E: StdError + 'static,
+    {
+        match self {
+            Error::Domain(domain) => match domain.source() {
+                Some(_) => domain.into_source().unwrap(),
+                None => domain,
+            },
+            Error::Fault(fault) => match fault.source() {
+                Some(_) => fault.source.unwrap(),
+                None => Box::new(fault),
+            },
+        }
+        .downcast::<E>()
+        .map(|o| *o)
     }
 
     /// Add context of either [Error::Domain] or [Error::Fault] variant.
@@ -255,7 +260,7 @@ pub trait ResultFault<T, S> {
         F: FnOnce(S) -> Result<E, S>,
         E: Into<Error<D>>,
         S: StdError + 'static + Send + Sync,
-        D: Domain;
+        D: Into<Error<D>>;
 
     /// Convert any [Result::Err] into a [Result::Err] wrapping a [Fault]
     /// Use [fault](ResultFault::or_fault) instead if the error implements [std::error::Error]
@@ -324,7 +329,7 @@ impl<T, S> ResultFault<T, S> for Result<T, S> {
         F: FnOnce(S) -> Result<E, S>,
         E: Into<Error<D>>,
         S: StdError + 'static + Send + Sync,
-        D: Domain,
+        D: Into<Error<D>>,
     {
         match self {
             Ok(ok) => Ok(ok),
