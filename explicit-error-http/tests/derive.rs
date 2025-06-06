@@ -1,8 +1,11 @@
 #[cfg(feature = "actix-web")]
 mod actix;
+#[cfg(feature = "axum")]
+mod axum;
 
 // import only derive to validate that derives work without any required import
 use explicit_error_http::derive::HttpError;
+use http::StatusCode;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
@@ -17,8 +20,7 @@ struct MyDomainError;
 impl From<&MyDomainError> for explicit_error_http::HttpError {
     fn from(_: &MyDomainError) -> Self {
         explicit_error_http::HttpError {
-            #[cfg(feature = "actix-web")]
-            http_status_code: actix_web::http::StatusCode::BAD_REQUEST,
+            http_status_code: StatusCode::BAD_REQUEST,
             public: Box::new(ErrorBody {
                 foo: "foo".to_string(),
                 bar: 42,
@@ -35,8 +37,7 @@ fn http_error() {
     assert_eq!(
         error.output,
         explicit_error_http::HttpError {
-            #[cfg(feature = "actix-web")]
-            http_status_code: actix_web::http::StatusCode::BAD_REQUEST,
+            http_status_code: StatusCode::BAD_REQUEST,
             public: Box::new(ErrorBody {
                 foo: "foo".to_string(),
                 bar: 42,
@@ -53,14 +54,8 @@ fn http_error() {
             .is_some()
     );
 
-    #[cfg(feature = "actix-web")]
     assert_eq!(
         error.to_string(),
         r#"{"context":"context","http_status_code":400,"public":{"bar":42,"foo":"foo"},"source":"MyDomainError"}"#
-    );
-
-    assert_eq!(
-        error.to_string(),
-        r#"{"context":"context","public":{"bar":42,"foo":"foo"},"source":"MyDomainError"}"#
     );
 }

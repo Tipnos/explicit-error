@@ -212,7 +212,7 @@ pub trait ResultFault<T, S> {
     /// # Examples
     /// Pattern match to convert to an [Error::Domain]
     /// ```rust
-    /// # use actix_web::http::StatusCode;
+    /// # use http::StatusCode;
     /// # use problem_details::ProblemDetails;
     /// # use http::Uri;
     /// # use explicit_error_http::{Error, prelude::*, HttpError, derive::HttpError};
@@ -379,7 +379,7 @@ where
     /// if its type is the closure's parameter type.
     /// # Examples
     /// ```rust
-    /// # use actix_web::http::StatusCode;
+    /// # use http::StatusCode;
     /// # use http::Uri;
     /// # use problem_details::ProblemDetails;
     /// # use explicit_error_http::{prelude::*, HttpError, Result, derive::HttpError};

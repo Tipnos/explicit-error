@@ -94,9 +94,8 @@
 //! Below an example from the `explicit-error-http` crate to show what the syntax looks like.
 //!
 //! ```rust
-//! # use actix_web::http::StatusCode;
 //! # use problem_details::ProblemDetails;
-//! # use http::Uri;
+//! # use http::{StatusCode, Uri};
 //! # use explicit_error_http::{prelude::*, HttpError, Result, Fault, derive::HttpError};
 //! #[derive(HttpError, Debug)]
 //! enum MyError {
