@@ -93,7 +93,7 @@ impl Fault {
     /// ```rust
     /// # use explicit_error_http::{prelude::*, Error, HttpError, Fault, derive::HttpError};
     /// # use problem_details::ProblemDetails;
-    /// # use actix_web::http::StatusCode;
+    /// # use http::StatusCode;
     /// # use explicit_error_http::Result;
     /// fn fetch() -> Result<()> {
     ///     let sqlx_error = sqlx::Error::RowNotFound;

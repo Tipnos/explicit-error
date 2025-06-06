@@ -23,7 +23,7 @@ Usually, it is mostly functions either called by handlers or middlewares.
 In the body of the function you can explicitly turn errors into HTTP response using [HttpError] or marking them as [Fault].
 
 ```rust
-use actix_web::http::StatusCode;
+use http::StatusCode;
 use problem_details::ProblemDetails;
 use http::Uri;
 use explicit_error_http::{prelude::*, HttpError, Result, Fault};
@@ -62,7 +62,7 @@ Domain errors are often represented as enum or struct as they are raised in diff
 To easily enable the conversion to [Error] use the [HttpError](derive::HttpError) derive and implement `From<&MyError> for HttpError`.
 
 ```rust
-use actix_web::http::StatusCode;
+use http::StatusCode;
 use problem_details::ProblemDetails;
 use http::Uri;
 use explicit_error_http::{prelude::*, Result, derive::HttpError, HttpError};

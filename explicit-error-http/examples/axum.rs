@@ -1,4 +1,4 @@
-use actix_web::{App, HttpResponse, HttpServer, get};
+use axum::{Router, routing::get};
 use env_logger::Env;
 use explicit_error_http::{Error, Fault, HandlerError, HttpError, derive::HandlerErrorHelpers};
 use http::StatusCode;
@@ -41,15 +41,13 @@ impl HandlerError for MyHandlerError {
     }
 }
 
-#[get("/domain")]
-async fn domain_error() -> Result<HttpResponse, MyHandlerError> {
+async fn domain_error() -> Result<StatusCode, MyHandlerError> {
     service::operation_on_entity()?;
 
-    Ok(HttpResponse::Ok().finish())
+    Ok(StatusCode::OK)
 }
 
-#[get("/fault")]
-async fn fault_error() -> Result<HttpResponse, MyHandlerError> {
+async fn fault_error() -> Result<StatusCode, MyHandlerError> {
     service::fetch_entity()?;
 
     Err(HttpError {
@@ -58,17 +56,19 @@ async fn fault_error() -> Result<HttpResponse, MyHandlerError> {
         context: None,
     })?;
 
-    Ok(HttpResponse::Ok().finish())
+    Ok(StatusCode::OK)
 }
 
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
+#[tokio::main(flavor = "current_thread")]
+async fn main() {
     env_logger::init_from_env(Env::default().default_filter_or("info"));
 
-    HttpServer::new(|| App::new().service(domain_error).service(fault_error))
-        .bind(("127.0.0.1", 8080))?
-        .run()
-        .await
+    let app = Router::new()
+        .route("/domain", get(domain_error))
+        .route("/fault", get(fault_error));
+
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
+    axum::serve(listener, app).await.unwrap();
 }
 
 mod service {

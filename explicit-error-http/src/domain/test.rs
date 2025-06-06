@@ -1,6 +1,5 @@
 use super::*;
-#[cfg(feature = "actix-web")]
-use actix_web::http::StatusCode;
+use http::StatusCode;
 
 #[derive(Serialize)]
 struct ErrorBody {
@@ -13,7 +12,6 @@ fn into_source() {
     assert!(
         DomainError {
             output: HttpError {
-                #[cfg(feature = "actix-web")]
                 http_status_code: StatusCode::BAD_REQUEST,
                 public: Box::new(""),
                 context: None,
@@ -27,7 +25,6 @@ fn into_source() {
     assert!(
         DomainError {
             output: HttpError {
-                #[cfg(feature = "actix-web")]
                 http_status_code: StatusCode::BAD_REQUEST,
                 public: Box::new(""),
                 context: None,
@@ -45,7 +42,6 @@ fn into_source() {
 fn with_context() {
     let domain = DomainError {
         output: HttpError {
-            #[cfg(feature = "actix-web")]
             http_status_code: StatusCode::BAD_REQUEST,
             public: Box::new(""),
             context: None,
@@ -66,7 +62,6 @@ fn context() {
     assert!(
         DomainError {
             output: HttpError {
-                #[cfg(feature = "actix-web")]
                 http_status_code: StatusCode::BAD_REQUEST,
                 public: Box::new(""),
                 context: None,
@@ -80,7 +75,6 @@ fn context() {
     assert_eq!(
         DomainError {
             output: HttpError {
-                #[cfg(feature = "actix-web")]
                 http_status_code: StatusCode::BAD_REQUEST,
                 public: Box::new(""),
                 context: Some("context".to_string()),
@@ -98,7 +92,6 @@ fn source() {
     assert!(
         DomainError {
             output: HttpError {
-                #[cfg(feature = "actix-web")]
                 http_status_code: StatusCode::BAD_REQUEST,
                 public: Box::new(""),
                 context: None,
@@ -112,7 +105,6 @@ fn source() {
     assert!(
         DomainError {
             output: HttpError {
-                #[cfg(feature = "actix-web")]
                 http_status_code: StatusCode::BAD_REQUEST,
                 public: Box::new(""),
                 context: None,
@@ -130,7 +122,6 @@ fn source() {
 fn from_domain_for_error() {
     let domain = Error::from(DomainError {
         output: HttpError {
-            #[cfg(feature = "actix-web")]
             http_status_code: StatusCode::BAD_REQUEST,
             public: Box::new(ErrorBody {
                 foo: "foo",
@@ -145,7 +136,6 @@ fn from_domain_for_error() {
     assert_eq!(
         domain.output,
         HttpError {
-            #[cfg(feature = "actix-web")]
             http_status_code: StatusCode::BAD_REQUEST,
             public: Box::new(ErrorBody {
                 foo: "foo",
@@ -162,8 +152,7 @@ fn serialize() {
     assert_eq!(
         serde_json::json!(DomainError {
             output: HttpError {
-                #[cfg(feature = "actix-web")]
-                http_status_code: actix_web::http::StatusCode::BAD_REQUEST,
+                http_status_code: StatusCode::BAD_REQUEST,
                 public: Box::new(ErrorBody {
                     foo: "foo",
                     bar: 42
@@ -181,8 +170,7 @@ fn serialize() {
 fn display() {
     let domain = DomainError {
         output: HttpError {
-            #[cfg(feature = "actix-web")]
-            http_status_code: actix_web::http::StatusCode::BAD_REQUEST,
+            http_status_code: StatusCode::BAD_REQUEST,
             public: Box::new(ErrorBody {
                 foo: "foo",
                 bar: 42,
@@ -193,17 +181,9 @@ fn display() {
     }
     .to_string();
 
-    #[cfg(feature = "actix-web")]
     assert_eq!(
             domain,
         r#"{"context":"context","http_status_code":400,"public":{"bar":42,"foo":"foo"},"source":"PoolClosed"}"#
-            .to_string()
-    );
-
-    #[cfg(not(feature = "actix-web"))]
-    assert_eq!(
-        domain,
-        r#"{"context":"context","public":{"bar":42,"foo":"foo"},"source":"PoolClosed"}"#
             .to_string()
     );
 }
@@ -214,8 +194,7 @@ struct MyDomainError;
 impl From<&MyDomainError> for HttpError {
     fn from(_: &MyDomainError) -> Self {
         HttpError {
-            #[cfg(feature = "actix-web")]
-            http_status_code: actix_web::http::StatusCode::BAD_REQUEST,
+            http_status_code: StatusCode::BAD_REQUEST,
             public: Box::new(ErrorBody {
                 foo: "foo",
                 bar: 42,
@@ -248,8 +227,7 @@ fn to_domain_error() {
     assert_eq!(
         domain_error.output,
         HttpError {
-            #[cfg(feature = "actix-web")]
-            http_status_code: actix_web::http::StatusCode::BAD_REQUEST,
+            http_status_code: StatusCode::BAD_REQUEST,
             public: Box::new(ErrorBody {
                 foo: "foo",
                 bar: 42,
@@ -266,16 +244,9 @@ fn to_domain_error() {
             .is_some()
     );
 
-    #[cfg(feature = "actix-web")]
     assert_eq!(
         domain_error.to_string(),
         r#"{"context":"context","http_status_code":400,"public":{"bar":42,"foo":"foo"},"source":"MyDomainError"}"#
-    );
-
-    #[cfg(not(feature = "actix-web"))]
-    assert_eq!(
-        domain_error.to_string(),
-        r#"{"context":"context","public":{"bar":42,"foo":"foo"},"source":"MyDomainError"}"#
     );
 }
 
@@ -288,8 +259,7 @@ fn result_domain_with_context() {
     assert_eq!(
         domain_error.output,
         HttpError {
-            #[cfg(feature = "actix-web")]
-            http_status_code: actix_web::http::StatusCode::BAD_REQUEST,
+            http_status_code: StatusCode::BAD_REQUEST,
             public: Box::new(ErrorBody {
                 foo: "foo",
                 bar: 42,
@@ -306,15 +276,8 @@ fn result_domain_with_context() {
             .is_some()
     );
 
-    #[cfg(feature = "actix-web")]
     assert_eq!(
         domain_error.to_string(),
         r#"{"context":"context 2","http_status_code":400,"public":{"bar":42,"foo":"foo"},"source":"MyDomainError"}"#
-    );
-
-    #[cfg(not(feature = "actix-web"))]
-    assert_eq!(
-        domain_error.to_string(),
-        r#"{"context":"context 2","public":{"bar":42,"foo":"foo"},"source":"MyDomainError"}"#
     );
 }

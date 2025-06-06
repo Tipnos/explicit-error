@@ -18,7 +18,7 @@
 //! In the body of the function you can explicitly turn errors into HTTP response using [HttpError] or marking them as [Fault].
 //!
 //! ```rust
-//! use actix_web::http::StatusCode;
+//! use http::StatusCode;
 //! use problem_details::ProblemDetails;
 //! use http::Uri;
 //! use explicit_error_http::{prelude::*, HttpError, Result, Fault};
@@ -57,7 +57,7 @@
 //! To easily enable the conversion to [Error] use the [HttpError](derive::HttpError) derive and implement `From<&MyError> for HttpError`.
 //!
 //! ```rust
-//! use actix_web::http::StatusCode;
+//! use http::StatusCode;
 //! use problem_details::ProblemDetails;
 //! use http::Uri;
 //! use explicit_error_http::{prelude::*, Result, derive::HttpError, HttpError};
@@ -95,7 +95,7 @@
 //! A solution is provided using [try_map_on_source](explicit_error::ResultError::try_map_on_source) on any `Result<T, Error>`, or equivalently `explicit_error_http::Result<T>`.
 //!
 //! ```rust
-//! # use actix_web::http::StatusCode;
+//! # use http::StatusCode;
 //! # use http::Uri;
 //! # use problem_details::ProblemDetails;
 //! # use explicit_error_http::{prelude::*, HttpError, Result, derive::HttpError};
@@ -202,8 +202,6 @@
 //!     Ok(HttpResponse::Ok().finish())
 //! }
 //! ```
-#[cfg(feature = "actix-web")]
-mod actix;
 mod domain;
 mod error;
 mod handler;
@@ -223,7 +221,6 @@ pub mod prelude {
 }
 
 pub mod derive {
-    #[cfg(feature = "actix-web")]
     pub use explicit_error_derive::HandlerErrorHelpers;
     pub use explicit_error_derive::HttpError;
 }

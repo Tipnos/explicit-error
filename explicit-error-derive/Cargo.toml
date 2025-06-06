@@ -8,13 +8,14 @@ keywords = ["error", "error-handling"]
 license = "Apache-2.0"
 name = "explicit-error-derive"
 repository = "https://github.com/Tipnos/explicit-error"
-version = "0.1.7"
+version = "0.2.0"
 
 [lib]
 proc-macro = true
 
 [features]
 actix-web = ["http"]
+axum = ["http"]
 exit = []
 http = []
 
