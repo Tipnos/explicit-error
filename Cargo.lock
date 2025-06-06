@@ -716,7 +716,7 @@ dependencies = [
 
 [[package]]
 name = "explicit-error-derive"
-version = "0.1.7"
+version = "0.2.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -733,7 +733,7 @@ dependencies = [
 
 [[package]]
 name = "explicit-error-http"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "actix-web",
  "axum",
