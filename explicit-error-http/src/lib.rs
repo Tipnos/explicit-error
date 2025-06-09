@@ -6,7 +6,7 @@
 //! - A derive macro [HttpError](derive::HttpError) to easily declare how enum or struct errors transform into an [Error], i.e. defines the generated HTTP response.
 //! - Inline transformation of any errors wrapped in a [Result] into an [Error].
 //! - Add context to errors to help debug.
-//! - Monitor errors before they are transformed into proper HTTP responses. The implementation is different depending on the web framework used, to have more details refer to the `Web frameworks` section.
+//! - Monitor errors before they are transformed into proper HTTP responses.
 //!
 //! # A tour of explicit-error-http
 //!
@@ -147,8 +147,6 @@
 //!
 //! explicit-error-http integrates well with most popular web frameworks by providing a feature flag for each of them.
 //!
-//! ### Actix web
-//!
 //! The type [Error] cannot directly be used as handlers or middlewares returned [Err] variant. A dedicated type is required.
 //! The easiest implementation is to declare a [Newtype](https://doc.rust-lang.org/rust-by-example/generics/new_types.html),
 //! derive it with the [HandlerError] and implement the [HandlerError] trait.
@@ -197,7 +195,6 @@
 //!     }
 //! }
 //!
-//! #[get("/my-handler")]
 //! async fn my_handler() -> Result<HttpResponse, MyHandlerError> {
 //!     Ok(HttpResponse::Ok().finish())
 //! }

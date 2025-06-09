@@ -3,7 +3,7 @@ use erased_serde::Serialize as DynSerialize;
 use http::StatusCode;
 use serde::{Serialize, Serializer};
 
-/// Self-sufficient container to both log an error and generate its HTTP response. Regarding the web framework you use, its shape can be different.
+/// Self-sufficient container to both log an error and generate its HTTP response.
 ///
 /// [Error](crate::Error) implements `From<HttpError>`, use `?` and `.into()` in functions and closures to convert to the [Error::Domain] variant.
 ///
