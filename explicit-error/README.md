@@ -68,7 +68,7 @@ On the contrary `explicit-error::Error` is not an opaque type. It is an enum wit
 To illustrate, below an example from the `explicit-error-http` crate.
 
 ```rust
-pub enum Error<D: Domain> {
+pub enum Error<D> {
     Domain(Box<D>), // Box for size: https://doc.rust-lang.org/clippy/lint_configuration.html#large-error-threshold
     Fault(Fault), // Can be generated from any `Result::Err`, `Option::None` or out of the box
 }

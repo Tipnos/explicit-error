@@ -76,7 +76,7 @@
 //!
 //! ```rust
 //! # use explicit_error::{Fault, Domain};
-//! pub enum Error<D: Domain> {
+//! pub enum Error<D> {
 //!     Domain(Box<D>), // Box for size: https://doc.rust-lang.org/clippy/lint_configuration.html#large-error-threshold
 //!     Fault(Fault), // Can be generated from any `Result::Err`, `Option::None` or out of the box
 //! }
