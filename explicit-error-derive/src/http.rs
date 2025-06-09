@@ -75,6 +75,13 @@ pub fn derive(input: syn::DeriveInput) -> TokenStream {
         }
 
         #[automatically_derived]
+        impl #impl_generics From<explicit_error_http::DomainError> for #ident #ty_generics #where_clause {
+            fn from(value: explicit_error_http::DomainError) -> Self {
+                <Self as explicit_error_http::HandlerError>::from_error(value.into())
+            }
+        }
+
+        #[automatically_derived]
         impl #impl_generics std::fmt::Display for #ident #ty_generics #where_clause {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 std::fmt::Display::fmt(<Self as explicit_error_http::HandlerError>::error(self), f)
