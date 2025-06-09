@@ -43,6 +43,24 @@ fn with_context() {
 }
 
 #[test]
+fn with_source() {
+    let error = HttpError {
+        http_status_code: StatusCode::BAD_REQUEST,
+        public: Box::new(ErrorBody {
+            foo: "foo",
+            bar: 42,
+        }),
+        context: None,
+    }
+    .with_source(sqlx::Error::RowNotFound);
+
+    assert_eq!(
+        error.source.unwrap().to_string(),
+        sqlx::Error::RowNotFound.to_string()
+    )
+}
+
+#[test]
 fn from_http_error_for_error() {
     let domain_error = crate::Error::from(HttpError {
         http_status_code: StatusCode::BAD_REQUEST,
