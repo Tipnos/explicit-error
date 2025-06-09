@@ -12,7 +12,7 @@ use std::{error::Error as StdError, fmt::Debug};
 /// # Examples
 /// [DomainError] can be generated because of a predicate
 /// ```rust
-/// # use actix_web::http::StatusCode;
+/// # use http::StatusCode;
 /// use explicit_error_http::{HttpError, Result, derive::HttpError};
 ///
 /// #[derive(Debug, HttpError)]
@@ -43,7 +43,7 @@ use std::{error::Error as StdError, fmt::Debug};
 /// ```
 /// Or from a [Result]
 /// ```rust
-/// # use actix_web::http::StatusCode;
+/// # use http::StatusCode;
 /// # use problem_details::ProblemDetails;
 /// # use http::Uri;
 /// use explicit_error_http::{Error, prelude::*, derive::HttpError, HttpError};
@@ -88,7 +88,7 @@ use std::{error::Error as StdError, fmt::Debug};
 /// Or an [Option]
 /// ```rust
 /// # use explicit_error_http::HttpError;
-/// # use actix_web::http::StatusCode;
+/// # use http::StatusCode;
 /// Some(12).ok_or(HttpError::new(StatusCode::FORBIDDEN, ""))?;
 /// # Ok::<(), HttpError>(())
 /// ```

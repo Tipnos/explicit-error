@@ -1,8 +1,9 @@
 use crate::Error;
 use erased_serde::Serialize as DynSerialize;
-use serde::Serialize;
+use http::StatusCode;
+use serde::{Serialize, Serializer};
 
-/// Self-sufficient container to both log an error and generate its HTTP response. Regarding the web framework you use, its shape can be different.
+/// Self-sufficient container to both log an error and generate its HTTP response.
 ///
 /// [Error](crate::Error) implements `From<HttpError>`, use `?` and `.into()` in functions and closures to convert to the [Error::Domain] variant.
 ///
@@ -10,7 +11,7 @@ use serde::Serialize;
 /// # Examples
 /// Domain errors that derive [HttpError](crate::derive::HttpError) must implement `From<&MyDomainError> for HttpError`.
 /// ```rust
-/// # use actix_web::http::StatusCode;
+/// # use http::StatusCode;
 /// # use problem_details::ProblemDetails;
 /// # use http::Uri;
 /// use explicit_error_http::{derive::HttpError, prelude::*, HttpError};
@@ -37,7 +38,7 @@ use serde::Serialize;
 /// Domain errors cannot require to be extracted in either a struct or enum variant (eg: middleware errors).
 /// You can generate [Error::Domain] variant with an [HttpError]
 /// ```rust
-/// # use actix_web::http::StatusCode;
+/// # use http::StatusCode;
 /// # use problem_details::ProblemDetails;
 /// # use http::Uri;
 /// use explicit_error_http::{Error, prelude::*, HttpError};
@@ -56,7 +57,7 @@ use serde::Serialize;
 /// Usually to avoid boilerplate and having consistency in error responses web applications
 /// implement helpers for frequent http error codes.
 /// ```rust
-/// # use actix_web::http::StatusCode;
+/// # use http::StatusCode;
 /// # use problem_details::ProblemDetails;
 /// # use http::Uri;
 /// use explicit_error_http::{prelude::*, HttpError, Error};
@@ -81,9 +82,8 @@ use serde::Serialize;
 /// ```
 #[derive(Serialize)]
 pub struct HttpError {
-    #[cfg(feature = "actix-web")]
     #[serde(skip)]
-    pub http_status_code: actix_web::http::StatusCode,
+    pub http_status_code: StatusCode,
     #[serde(flatten)]
     pub public: Box<dyn DynSerialize + Send + Sync>,
     #[serde(skip)]
@@ -96,7 +96,7 @@ impl HttpError {
     /// # Examples
     /// ```rust
     /// # use explicit_error_http::{Result, HttpError};
-    /// # use actix_web::http::StatusCode;
+    /// # use http::StatusCode;
     /// # use problem_details::ProblemDetails;
     /// # use http::Uri;
     /// fn forbidden() -> HttpError {
@@ -108,9 +108,8 @@ impl HttpError {
     ///     )
     /// }
     /// ```
-    #[cfg(feature = "actix-web")]
     pub fn new<S: Serialize + 'static + Send + Sync>(
-        http_status_code: actix_web::http::StatusCode,
+        http_status_code: StatusCode,
         public: S,
     ) -> Self {
         Self {
@@ -125,7 +124,7 @@ impl HttpError {
     /// # Examples
     /// ```rust
     /// # use explicit_error_http::{Result, HttpError};
-    /// # use actix_web::http::StatusCode;
+    /// # use http::StatusCode;
     /// # use problem_details::ProblemDetails;
     /// # use http::Uri;
     /// fn check_authz() -> Result<()> {
@@ -159,7 +158,6 @@ impl From<HttpError> for Error {
     }
 }
 
-#[cfg(feature = "actix-web")]
 impl PartialEq for HttpError {
     fn eq(&self, other: &Self) -> bool {
         self.context == other.context
@@ -168,18 +166,10 @@ impl PartialEq for HttpError {
     }
 }
 
-#[cfg(not(feature = "actix-web"))]
-impl PartialEq for HttpError {
-    fn eq(&self, other: &Self) -> bool {
-        self.context == other.context && serde_json::json!(self.public) == serde_json::json!(other)
-    }
-}
-
 #[derive(Serialize)]
 pub(crate) struct HttpErrorDisplay<'s> {
-    #[cfg(feature = "actix-web")]
-    #[serde(serialize_with = "crate::actix::serialize_http_status_code")]
-    pub http_status_code: actix_web::http::StatusCode,
+    #[serde(serialize_with = "serialize_http_status_code")]
+    pub http_status_code: http::StatusCode,
     pub public: &'s dyn DynSerialize,
     pub context: Option<&'s str>,
 }
@@ -187,7 +177,6 @@ pub(crate) struct HttpErrorDisplay<'s> {
 impl<'s> From<&'s HttpError> for HttpErrorDisplay<'s> {
     fn from(value: &'s HttpError) -> Self {
         Self {
-            #[cfg(feature = "actix-web")]
             http_status_code: value.http_status_code,
             public: value.public.as_ref(),
             context: value.context.as_deref(),
@@ -209,6 +198,16 @@ impl std::fmt::Debug for HttpError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "HttpError{}", self)
     }
+}
+
+pub(crate) fn serialize_http_status_code<S>(
+    status_code: &StatusCode,
+    s: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    s.serialize_u16(status_code.as_u16())
 }
 
 #[cfg(test)]

@@ -43,7 +43,7 @@ fn business_logic() -> Result<()> {
 Usually wrapped types are containers of one error output format that optionnaly carries the underlying error as an `std::error::Error` source.
 
 Two crates are built on top of `explicit-error`:
-- [`explicit-error-http`](https://crates.io/crates/explicit-error-http) provides tools and derives to idiomatically manage and monitor errors that generate an HTTP response. It has dedicated feature flag to integrate well with most populars web frameworks (actix-web, axum WIP).
+- [`explicit-error-http`](https://crates.io/crates/explicit-error-http) provides tools and derives to idiomatically manage and monitor errors that generate an HTTP response. It has dedicated feature flag to integrate well with most populars web frameworks (actix-web, axum).
 - [`explicit-error-exit`](https://crates.io/crates/explicit-error-exit) to manage errors that end a process/program.
 
 If you want to have more examples to understand the benefits have a look at [`explicit-error-http`](https://crates.io/crates/explicit-error-http) doc and examples.

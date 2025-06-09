@@ -3,14 +3,14 @@ extern crate proc_macro2;
 extern crate quote;
 extern crate syn;
 
-#[cfg(feature = "actix-web")]
-mod actix;
 #[cfg(any(feature = "exit", feature = "http"))]
 mod domain;
+#[cfg(feature = "http")]
+mod http;
 
-#[cfg(any(feature = "http", feature = "exit", feature = "actix-web"))]
+#[cfg(any(feature = "http", feature = "exit"))]
 use proc_macro::TokenStream;
-#[cfg(any(feature = "http", feature = "exit", feature = "actix-web"))]
+#[cfg(any(feature = "http", feature = "exit"))]
 use syn::{DeriveInput, parse_macro_input};
 
 #[cfg(feature = "http")]
@@ -33,12 +33,9 @@ pub fn derive_bin_error(input: TokenStream) -> TokenStream {
         .into()
 }
 
-#[cfg(feature = "actix-web")]
+#[cfg(feature = "http")]
 #[proc_macro_derive(HandlerErrorHelpers)]
 pub fn derive_actix_handler_error(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
-
-    actix::derive(input)
-        .unwrap_or_else(syn::Error::into_compile_error)
-        .into()
+    http::derive(input).into()
 }

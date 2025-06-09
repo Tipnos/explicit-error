@@ -16,7 +16,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - uses: extractions/setup-just@v3
     - name: Cache
       uses: actions/cache@v4
       with:
@@ -34,7 +33,7 @@ jobs:
     - name: Format
       run: cargo fmt --check
     - name: Run tests
-      run: just test
+      run: cargo test --all-features
     - name: Doc
       run: cargo doc --all-features
     - name: Publish dry run
