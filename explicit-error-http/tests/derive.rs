@@ -1,7 +1,7 @@
+#[cfg(feature = "axum")]
+mod _axum;
 #[cfg(feature = "actix-web")]
 mod actix;
-#[cfg(feature = "axum")]
-mod axum;
 
 use explicit_error::Fault;
 use explicit_error_derive::HandlerErrorHelpers;
