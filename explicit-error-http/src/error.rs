@@ -147,6 +147,28 @@ impl HttpError {
         self.context = Some(context.to_string());
         self
     }
+
+    /// Add a source to an [HttpError] by converting it on the fly to a [crate::DomainError]
+    /// # Example
+    /// ```rust
+    /// # use explicit_error_http::{Result, HttpError};
+    /// # use http::StatusCode;
+    /// fn check() -> Result<()> {
+    ///     Err(sqlx::Error::RowNotFound).map_err(|e|
+    ///         HttpError::new(StatusCode::NOT_FOUND, "not found")
+    ///             .with_source(e))?;      
+    /// #   Ok(())
+    /// }
+    /// ```
+    pub fn with_source<E: std::error::Error + 'static + Send + Sync>(
+        self,
+        error: E,
+    ) -> super::DomainError {
+        super::DomainError {
+            output: self,
+            source: Some(Box::new(error)),
+        }
+    }
 }
 
 impl From<HttpError> for Error {

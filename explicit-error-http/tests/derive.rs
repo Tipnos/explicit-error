@@ -1,12 +1,58 @@
+#[cfg(feature = "axum")]
+mod _axum;
 #[cfg(feature = "actix-web")]
 mod actix;
-#[cfg(feature = "axum")]
-mod axum;
 
+use explicit_error::Fault;
+use explicit_error_derive::HandlerErrorHelpers;
 // import only derive to validate that derives work without any required import
-use explicit_error_http::derive::HttpError;
+use explicit_error_http::{DomainError, Error, HttpError, derive::HttpError};
 use http::StatusCode;
 use serde::{Deserialize, Serialize};
+
+#[derive(HandlerErrorHelpers)]
+struct MyHandlerError(explicit_error_http::Error);
+
+impl explicit_error_http::HandlerError for MyHandlerError {
+    fn from_error(value: explicit_error_http::Error) -> Self {
+        MyHandlerError(value)
+    }
+
+    fn public_fault_response(_: &explicit_error_http::Fault) -> impl Serialize {
+        ErrorBody {
+            foo: "fault".to_string(),
+            bar: 500,
+        }
+    }
+
+    fn error(&self) -> &explicit_error_http::Error {
+        &self.0
+    }
+
+    fn domain_response(_: &explicit_error_http::DomainError) -> impl Serialize {
+        ErrorBody {
+            foo: "domain".to_string(),
+            bar: 200,
+        }
+    }
+}
+
+#[test]
+fn converts() {
+    MyHandlerError::from(Fault::new()).0.unwrap_fault();
+    MyHandlerError::from(DomainError {
+        output: HttpError::new(StatusCode::ACCEPTED, ""),
+        source: None,
+    })
+    .0
+    .unwrap();
+    MyHandlerError::from(HttpError::new(StatusCode::ACCEPTED, ""))
+        .0
+        .unwrap();
+    MyHandlerError::from(Error::Fault(Fault::new()))
+        .0
+        .unwrap_fault();
+}
 
 #[derive(Serialize, Deserialize)]
 struct ErrorBody {
