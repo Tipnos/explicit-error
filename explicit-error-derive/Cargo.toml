@@ -8,7 +8,7 @@ keywords = ["error", "error-handling"]
 license = "Apache-2.0"
 name = "explicit-error-derive"
 repository = "https://github.com/Tipnos/explicit-error"
-version = "0.2.0"
+version = "0.2.1"
 
 [lib]
 proc-macro = true
