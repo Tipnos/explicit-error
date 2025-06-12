@@ -7,6 +7,7 @@ Built on top of [`explicit-error`](https://crates.io/crates/explicit-error), it 
 Based on the [explicit-error](explicit_error) crate, its chore tenet is to favor explicitness by inlining the error output while remaining concise.
 
 The key features are:
+- Provide [MainResult] as a returned type of crate's main function to have well formated error.
 - Explicitly mark any error wrapped in a [Result] as a [Fault], a backtrace is captured.
 - Inline transformation of any errors wrapped in a [Result] into an [Error].
 - A derive macro [ExitError](derive::ExitError) to easily declare how enum or struct errors transform into an [Error].
@@ -20,11 +21,23 @@ The cornerstone of the library is the [Error] type. Use `Result<T, explicit_erro
 
 In the body of the function you can explicitly turn errors as exit errors using [ExitError] or marking them as [Fault].
 ```rust
-use explicit_error_exit::{prelude::*, ExitError, Result, Fault};
+use explicit_error_exit::{prelude::*, ExitError, Result, Fault, MainResult};
 use std::process::ExitCode;
 // Import the prelude to enable functions on std::result::Result
 
+fn main() -> MainResult { // Error message returned: "Error: Something went wrong because .."
+    business_logic()?;
+    Ok(())
+}
+
 fn business_logic() -> Result<()> {
+    Err(42).map_err(|e|
+        ExitError::new(
+            "Something went wrong because ..",
+            ExitCode::from(e)
+        )
+    )?;
+
     Err(std::io::Error::new(std::io::ErrorKind::Other, "oh no!"))
         .or_fault()?;
     
@@ -35,13 +48,6 @@ fn business_logic() -> Result<()> {
         Err(Fault::new()
             .with_context("Usefull context to help debug."))?;
     }
-
-    Err(42).map_err(|e|
-        ExitError::new(
-            "Something went wrong because ..",
-            ExitCode::from(e)
-        )
-    )?;
 
     Ok(())
 }
