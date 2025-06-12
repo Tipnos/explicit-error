@@ -2,6 +2,7 @@
 //! Based on the [explicit-error](explicit_error) crate, its chore tenet is to favor explicitness by inlining the error output while remaining concise.
 //!
 //! The key features are:
+//! - Provide [MainResult] as a returned type of crate's main function with properly formated console error.
 //! - Explicitly mark any error wrapped in a [Result] as a [Fault], a backtrace is captured.
 //! - Inline transformation of any errors wrapped in a [Result] into an [Error].
 //! - A derive macro [ExitError](derive::ExitError) to easily declare how enum or struct errors transform into an [Error].
@@ -15,11 +16,22 @@
 //!
 //! In the body of the function you can explicitly turn errors as exit errors using [ExitError] or marking them as [Fault].
 //! ```rust
-//! use explicit_error_exit::{prelude::*, ExitError, Result, Fault};
+//! use explicit_error_exit::{prelude::*, ExitError, Result, Fault, MainResult};
 //! use std::process::ExitCode;
 //! // Import the prelude to enable functions on std::result::Result
 //!
+//! fn main() -> MainResult { // Error message returned: "Error: Something went wrong because .."
+//!     business_logic()?;
+//! }
+//!
 //! fn business_logic() -> Result<()> {
+//!     Err(42).map_err(|e|
+//!         ExitError::new(
+//!             "Something went wrong because ..",
+//!             ExitCode::from(e)
+//!         )
+//!     )?;
+//!
 //!     Err(std::io::Error::new(std::io::ErrorKind::Other, "oh no!"))
 //!         .or_fault()?;
 //!     
@@ -30,13 +42,6 @@
 //!         Err(Fault::new()
 //!             .with_context("Usefull context to help debug."))?;
 //!     }
-//!
-//!     Err(42).map_err(|e|
-//!         ExitError::new(
-//!             "Something went wrong because ..",
-//!             ExitCode::from(e)
-//!         )
-//!     )?;
 //!
 //!     Ok(())
 //! }
@@ -121,11 +126,14 @@
 mod domain;
 mod error;
 
+use std::process::{ExitCode, Termination};
+
 pub use domain::*;
 pub use error::*;
 
 pub type Error = explicit_error::Error<DomainError>;
 pub type Result<T> = std::result::Result<T, Error>;
+pub type MainResult = std::result::Result<(), MainError>;
 
 /// Re-import from [explicit_error] crate.
 pub use explicit_error::Fault;
@@ -137,4 +145,48 @@ pub mod prelude {
 
 pub mod derive {
     pub use explicit_error_derive::ExitError;
+}
+
+/// Crate's main function returned type. It implements [Termination] to properly format console error.
+///
+/// To have your own termination custom logic, you can re-implement an equivalent of [MainError]. Have a look at source it is straightforward.
+pub struct MainError(Error);
+
+impl Termination for MainError {
+    fn report(self) -> std::process::ExitCode {
+        match self.0 {
+            explicit_error::Error::Domain(domain) => domain.output.exit_code,
+            explicit_error::Error::Fault(_) => ExitCode::FAILURE,
+        }
+    }
+}
+
+impl std::fmt::Debug for MainError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl From<Error> for MainError {
+    fn from(value: Error) -> Self {
+        Self(value)
+    }
+}
+
+impl From<DomainError> for MainError {
+    fn from(value: DomainError) -> Self {
+        Self(value.into())
+    }
+}
+
+impl From<ExitError> for MainError {
+    fn from(value: ExitError) -> Self {
+        Self(value.into())
+    }
+}
+
+impl From<Fault> for MainError {
+    fn from(value: Fault) -> Self {
+        Self(value.into())
+    }
 }
