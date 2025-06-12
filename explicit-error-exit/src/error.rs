@@ -94,6 +94,8 @@ impl ExitError {
     }
 }
 
+impl std::error::Error for ExitError {}
+
 impl Display for ExitError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.message)
