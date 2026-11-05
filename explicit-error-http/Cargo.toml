@@ -8,7 +8,7 @@ keywords = ["error", "error-handling"]
 license = "Apache-2.0"
 name = "explicit-error-http"
 repository = "https://github.com/Tipnos/explicit-error"
-version = "0.3.1"
+version = "0.4.0"
 
 [features]
 actix-web = ["explicit-error-derive/actix-web"]
@@ -16,10 +16,9 @@ axum = ["explicit-error-derive/axum"]
 
 [dependencies]
 erased-serde = "0.4.6"
-explicit-error = {version = "0", path = "../explicit-error"}
-explicit-error-derive = {version = "0", path = "../explicit-error-derive", features = ["http"]}
+explicit-error = {version = "0.2", path = "../explicit-error"}
+explicit-error-derive = {version = "0.3", path = "../explicit-error-derive", features = ["http"]}
 http = "1.3.1"
-problem_details = "0.8.0"
 serde = "1.0.219"
 serde_json = "1.0.140"
 
@@ -29,6 +28,7 @@ axum = "0.8.4"
 env_logger = "0.11.8"
 http-body-util = "0.1.3"
 log = "0.4.27"
+problem_details = "0.8.0"
 sqlx = "0.8.3"
 tokio = "1.45.1"
 tower = "0.5.2"

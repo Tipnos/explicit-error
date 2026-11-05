@@ -13,8 +13,10 @@ pub fn derive(input: syn::DeriveInput) -> TokenStream {
                     match <Self as explicit_error_http::HandlerError>::error(self) {
                         explicit_error_http::Error::Domain(d) => actix_web::HttpResponse::build(
                             actix_web::http::StatusCode::from_u16(d.output.http_status_code.as_u16()).unwrap())
+                            .insert_header((actix_web::http::header::CONTENT_TYPE, explicit_error_http::PROBLEM_JSON_CONTENT_TYPE))
                             .json(<Self as explicit_error_http::HandlerError>::domain_response(d)),
                         explicit_error_http::Error::Fault(b) => actix_web::HttpResponse::InternalServerError()
+                            .insert_header((actix_web::http::header::CONTENT_TYPE, explicit_error_http::PROBLEM_JSON_CONTENT_TYPE))
                             .json(<Self as explicit_error_http::HandlerError>::public_fault_response(b)),
                     }
                 }
@@ -32,10 +34,12 @@ pub fn derive(input: syn::DeriveInput) -> TokenStream {
                     match <Self as explicit_error_http::HandlerError>::error(&self) {
                         explicit_error_http::Error::Domain(d) => axum::response::IntoResponse::into_response((
                             axum::http::StatusCode::from_u16(d.output.http_status_code.as_u16()).unwrap(),
+                            [(axum::http::header::CONTENT_TYPE, explicit_error_http::PROBLEM_JSON_CONTENT_TYPE)],
                             axum::Json(<Self as explicit_error_http::HandlerError>::domain_response(d)),
                         )),
                         explicit_error_http::Error::Fault(b) => axum::response::IntoResponse::into_response((
                             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                            [(axum::http::header::CONTENT_TYPE, explicit_error_http::PROBLEM_JSON_CONTENT_TYPE)],
                             axum::Json(<Self as explicit_error_http::HandlerError>::public_fault_response(b)),
                         )),
                     }

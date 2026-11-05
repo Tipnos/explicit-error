@@ -42,6 +42,12 @@ async fn handler_derive() {
 
     let resp = test::call_service(&app, test::TestRequest::get().uri("/domain").to_request()).await;
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
+    assert_eq!(
+        resp.headers()
+            .get(actix_web::http::header::CONTENT_TYPE)
+            .unwrap(),
+        explicit_error_http::PROBLEM_JSON_CONTENT_TYPE
+    );
     let resp = serde_json::from_str::<ErrorBody>(
         std::str::from_utf8(&body::to_bytes(resp.into_body()).await.unwrap_or_default()).unwrap(),
     )
@@ -52,6 +58,12 @@ async fn handler_derive() {
     let resp =
         test::call_service(&app, test::TestRequest::get().uri("/domain2").to_request()).await;
     assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+    assert_eq!(
+        resp.headers()
+            .get(actix_web::http::header::CONTENT_TYPE)
+            .unwrap(),
+        explicit_error_http::PROBLEM_JSON_CONTENT_TYPE
+    );
     let resp = serde_json::from_str::<ErrorBody>(
         std::str::from_utf8(&body::to_bytes(resp.into_body()).await.unwrap_or_default()).unwrap(),
     )
@@ -61,6 +73,12 @@ async fn handler_derive() {
 
     let resp = test::call_service(&app, test::TestRequest::get().uri("/fault").to_request()).await;
     assert_eq!(resp.status(), StatusCode::INTERNAL_SERVER_ERROR);
+    assert_eq!(
+        resp.headers()
+            .get(actix_web::http::header::CONTENT_TYPE)
+            .unwrap(),
+        explicit_error_http::PROBLEM_JSON_CONTENT_TYPE
+    );
     let resp = serde_json::from_str::<ErrorBody>(
         std::str::from_utf8(&body::to_bytes(resp.into_body()).await.unwrap_or_default()).unwrap(),
     )

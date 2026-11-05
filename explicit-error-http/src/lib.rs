@@ -49,7 +49,7 @@
 //! }
 //!```
 //!
-//! Note: The crate [problem_details] is used as an example for the HTTP response body. You can, of course, use whatever you would like that implements [Serialize](serde::Serialize).
+//! Note: The crate [problem_details](https://docs.rs/problem_details) is used as an example for the HTTP response body. You can, of course, use whatever you would like that implements [Serialize](serde::Serialize).
 //!
 //! ## Enum and struct
 //!
@@ -209,6 +209,9 @@ pub use handler::*;
 
 /// Re-import from [explicit_error] crate.
 pub use explicit_error::Fault;
+
+/// Media type of error responses, as defined by [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457) (Problem Details for HTTP APIs).
+pub const PROBLEM_JSON_CONTENT_TYPE: &str = "application/problem+json";
 
 pub type Error = explicit_error::Error<DomainError>;
 pub type Result<T> = std::result::Result<T, explicit_error::Error<DomainError>>;

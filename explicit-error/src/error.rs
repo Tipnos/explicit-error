@@ -79,12 +79,9 @@ where
     /// ```rust
     /// use explicit_error_exit::{ExitError, derive::ExitError, Error};
     /// # use std::process::ExitCode;
-    /// #[test]
-    /// fn test() {
-    ///     assert_eq!(to_test().unwrap_err().downcast_source_ref()::<MyError>().unwrap(), &MyError::Foo);
-    /// }
+    /// assert_eq!(to_test().unwrap_err().downcast_source_ref::<MyError>().unwrap(), &MyError::Foo);
     ///
-    /// #[derive(ExitError, Debug)]
+    /// #[derive(ExitError, Debug, PartialEq)]
     /// enum MyError {
     ///     Foo,
     /// }
@@ -134,12 +131,9 @@ where
     /// ```rust
     /// use explicit_error_exit::{ExitError, derive::ExitError, Error};
     /// # use std::process::ExitCode;
-    /// #[test]
-    /// fn test() {
-    ///     assert_eq!(to_test().unwrap_err().downcast_source::<MyError>().unwrap(), MyError::Foo);
-    /// }
+    /// assert_eq!(to_test().unwrap_err().downcast_source::<MyError>().unwrap(), MyError::Foo);
     ///
-    /// #[derive(ExitError, Debug)]
+    /// #[derive(ExitError, Debug, PartialEq)]
     /// enum MyError {
     ///     Foo,
     /// }
@@ -407,7 +401,7 @@ where
     /// # }
     /// # fn handler() -> Result<()> {
     ///     let err: Result<()> = Err(MyError::Foo)?;
-    ///     
+    ///
     ///     // Do the map if the source's type of the Error is MyError
     ///     err.try_map_on_source(|e| {
     ///         match e {
@@ -463,10 +457,10 @@ where
                     Err(Error::Domain(d))
                 }
                 Error::Fault(b) => {
-                    if let Some(s) = &b.source {
-                        if s.is::<S>() {
-                            return Err(op(*b.source.unwrap().downcast::<S>().unwrap()).into());
-                        }
+                    if let Some(s) = &b.source
+                        && s.is::<S>()
+                    {
+                        return Err(op(*b.source.unwrap().downcast::<S>().unwrap()).into());
                     }
 
                     Err(Error::Fault(b))
