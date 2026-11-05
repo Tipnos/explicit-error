@@ -57,6 +57,10 @@ async fn handler_derive() {
         .await
         .unwrap();
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
+    assert_eq!(
+        resp.headers().get(http::header::CONTENT_TYPE).unwrap(),
+        explicit_error_http::PROBLEM_JSON_CONTENT_TYPE
+    );
     let resp = serde_json::from_str::<ErrorBody>(
         std::str::from_utf8(&resp.into_body().collect().await.unwrap().to_bytes()).unwrap(),
     )
@@ -74,6 +78,10 @@ async fn handler_derive() {
         .await
         .unwrap();
     assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+    assert_eq!(
+        resp.headers().get(http::header::CONTENT_TYPE).unwrap(),
+        explicit_error_http::PROBLEM_JSON_CONTENT_TYPE
+    );
     let resp = serde_json::from_str::<ErrorBody>(
         std::str::from_utf8(&resp.into_body().collect().await.unwrap().to_bytes()).unwrap(),
     )
@@ -91,6 +99,10 @@ async fn handler_derive() {
         .await
         .unwrap();
     assert_eq!(resp.status(), StatusCode::INTERNAL_SERVER_ERROR);
+    assert_eq!(
+        resp.headers().get(http::header::CONTENT_TYPE).unwrap(),
+        explicit_error_http::PROBLEM_JSON_CONTENT_TYPE
+    );
     let resp = serde_json::from_str::<ErrorBody>(
         std::str::from_utf8(&resp.into_body().collect().await.unwrap().to_bytes()).unwrap(),
     )
