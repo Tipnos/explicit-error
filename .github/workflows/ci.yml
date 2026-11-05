@@ -37,8 +37,4 @@ jobs:
     - name: Doc
       run: cargo doc --all-features
     - name: Publish dry run
-      run: |
-        cargo publish -p explicit-error --dry-run
-        cargo publish -p explicit-error-derive --dry-run
-        cargo publish -p explicit-error-exit --dry-run
-        cargo publish -p explicit-error-http --dry-run
+      run: cargo publish --workspace --dry-run
