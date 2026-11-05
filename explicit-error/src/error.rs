@@ -463,11 +463,10 @@ where
                     Err(Error::Domain(d))
                 }
                 Error::Fault(b) => {
-                    if let Some(s) = &b.source {
-                        if s.is::<S>() {
+                    if let Some(s) = &b.source
+                        && s.is::<S>() {
                             return Err(op(*b.source.unwrap().downcast::<S>().unwrap()).into());
                         }
-                    }
 
                     Err(Error::Fault(b))
                 }
