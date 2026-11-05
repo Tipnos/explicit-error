@@ -367,8 +367,7 @@ fn result_with_context() {
 #[test]
 fn unwrap_err_source() {
     assert_eq!(
-        Err::<(), _>(Error::Fault(Fault::new().with_source(MyError::default())))
-            .unwrap_err()
+        Error::Fault(Fault::new().with_source(MyError::default()))
             .downcast_source::<MyError>()
             .unwrap(),
         MyError::default()
@@ -378,8 +377,7 @@ fn unwrap_err_source() {
 #[should_panic]
 #[test]
 fn unwrap_err_source_panic() {
-    Err::<(), _>(Error::Fault(Fault::new()))
-        .unwrap_err()
+    Error::Fault(Fault::new())
         .downcast_source::<MyError>()
         .unwrap();
 }
@@ -387,12 +385,9 @@ fn unwrap_err_source_panic() {
 #[should_panic]
 #[test]
 fn unwrap_err_source_panic2() {
-    Err::<(), _>(Error::Fault(
-        Fault::new().with_source(sqlx::Error::RowNotFound),
-    ))
-    .unwrap_err()
-    .downcast_source::<MyError>()
-    .unwrap();
+    Error::Fault(Fault::new().with_source(sqlx::Error::RowNotFound))
+        .downcast_source::<MyError>()
+        .unwrap();
 }
 
 #[test]
